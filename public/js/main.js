@@ -1,3 +1,6 @@
+// -------------------------
+// ELEMENTOS DO DOM
+// -------------------------
 const tripsContainer = document.getElementById("tripsContainer");
 const searchBtn = document.getElementById("searchBtn");
 const sortSelect = document.getElementById("sort");
@@ -10,11 +13,16 @@ const loginModal = document.getElementById("loginModal");
 const closeModal = document.querySelector(".close");
 const goLoginBtn = document.getElementById("goLogin");
 
+// -------------------------
+// VARIÁVEIS DE ESTADO
+// -------------------------
 let trips = [];
 let currentPage = 1;
 const tripsPerPage = 8;
 
-// Buscar viagens do JSON
+// -------------------------
+// BUSCAR VIAGENS
+// -------------------------
 async function fetchTrips() {
   try {
     const response = await fetch("data/trips.json");
@@ -27,7 +35,9 @@ async function fetchTrips() {
   }
 }
 
-// Criar card de cada viagem
+// -------------------------
+// CRIAR CARD DE VIAGEM
+// -------------------------
 function createTripCard(trip) {
   const card = document.createElement("div");
   card.className = "trip-card";
@@ -40,15 +50,41 @@ function createTripCard(trip) {
     <button class="buyBtn">Comprar</button>
   `;
 
-  // Modal ao clicar em comprar
+  // Comprar → salva bilhete no localStorage
   card.querySelector(".buyBtn").addEventListener("click", () => {
-    loginModal.style.display = "block";
+    const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
+
+    if (!loggedUser) {
+      loginModal.style.display = "block";
+      return;
+    }
+
+    const allTickets = JSON.parse(localStorage.getItem("tickets")) || [];
+    const ticket = {
+      id: Date.now(),
+      username: loggedUser.username,
+      from: trip.from,
+      to: trip.to,
+      date: trip.date,
+      depart: trip.depart,
+      arrive: trip.arrive,
+      durationMin: trip.durationMin,
+      stops: trip.stops,
+      price: trip.price.base,
+      mode: trip.mode || ""
+    };
+
+    allTickets.push(ticket);
+    localStorage.setItem("tickets", JSON.stringify(allTickets));
+    alert("Bilhete comprado com sucesso!");
   });
 
   return card;
 }
 
-// Exibir viagens na página atual
+// -------------------------
+// EXIBIR VIAGENS
+// -------------------------
 function displayTrips(tripsList) {
   tripsContainer.innerHTML = "";
 
@@ -56,12 +92,19 @@ function displayTrips(tripsList) {
   const end = start + tripsPerPage;
   const paginatedTrips = tripsList.slice(start, end);
 
+  if (paginatedTrips.length === 0) {
+    tripsContainer.innerHTML = "<p>Nenhuma viagem encontrada.</p>";
+    return;
+  }
+
   paginatedTrips.forEach(trip => {
     tripsContainer.appendChild(createTripCard(trip));
   });
 }
 
-// Filtros
+// -------------------------
+// FILTROS E ORDENAÇÃO
+// -------------------------
 function applyFilters() {
   let filtered = trips;
 
@@ -69,41 +112,34 @@ function applyFilters() {
   const toValue = toInput.value.trim().toLowerCase();
   const dateValue = dateInput.value;
 
-  if (fromValue) {
-    filtered = filtered.filter(trip => trip.from.toLowerCase().includes(fromValue));
-  }
-  if (toValue) {
-    filtered = filtered.filter(trip => trip.to.toLowerCase().includes(toValue));
-  }
-  if (dateValue) {
-    filtered = filtered.filter(trip => trip.date === dateValue);
-  }
+  if (fromValue) filtered = filtered.filter(t => t.from.toLowerCase().includes(fromValue));
+  if (toValue) filtered = filtered.filter(t => t.to.toLowerCase().includes(toValue));
+  if (dateValue) filtered = filtered.filter(t => t.date === dateValue);
 
-  // Ordenação
   const sortValue = sortSelect.value;
-  if (sortValue === "price") {
-    filtered.sort((a, b) => a.price.base - b.price.base);
-  } else if (sortValue === "duration") {
-    filtered.sort((a, b) => a.durationMin - b.durationMin);
-  }
+  if (sortValue === "price") filtered.sort((a, b) => a.price.base - b.price.base);
+  else if (sortValue === "duration") filtered.sort((a, b) => a.durationMin - b.durationMin);
 
   currentPage = 1;
   displayTrips(filtered);
   setupPagination(filtered);
 }
 
-// Paginação
+// -------------------------
+// PAGINAÇÃO
+// -------------------------
 function setupPagination(tripsList) {
-  const paginationContainer = document.getElementById("pagination");
+  let paginationContainer = document.getElementById("pagination");
   if (!paginationContainer) {
-    const paginationDiv = document.createElement("div");
-    paginationDiv.id = "pagination";
-    paginationDiv.className = "pagination";
-    tripsContainer.after(paginationDiv);
+    const div = document.createElement("div");
+    div.id = "pagination";
+    div.className = "pagination";
+    tripsContainer.after(div);
+    paginationContainer = div;
   }
+
   const totalPages = Math.ceil(tripsList.length / tripsPerPage);
-  const container = document.getElementById("pagination");
-  container.innerHTML = "";
+  paginationContainer.innerHTML = "";
 
   for (let i = 1; i <= totalPages; i++) {
     const btn = document.createElement("button");
@@ -114,34 +150,29 @@ function setupPagination(tripsList) {
       displayTrips(tripsList);
       setupPagination(tripsList);
     });
-    container.appendChild(btn);
+    paginationContainer.appendChild(btn);
   }
 }
 
-// Eventos
+// -------------------------
+// EVENTOS
+// -------------------------
 searchBtn.addEventListener("click", applyFilters);
-
-// Atualiza ao apagar filtros
 [fromInput, toInput, dateInput].forEach(input => {
   input.addEventListener("input", () => {
     if (!input.value) applyFilters();
   });
 });
-
 sortSelect.addEventListener("change", applyFilters);
 
-// Modal
-closeModal.addEventListener("click", () => {
-  loginModal.style.display = "none";
-});
-
-window.addEventListener("click", (e) => {
+// Modal de login
+closeModal.addEventListener("click", () => loginModal.style.display = "none");
+window.addEventListener("click", e => {
   if (e.target === loginModal) loginModal.style.display = "none";
 });
+goLoginBtn.addEventListener("click", () => window.location.href = "login.html");
 
-goLoginBtn.addEventListener("click", () => {
-  window.location.href = "login.html";
-});
-
-// Inicialização
+// -------------------------
+// INICIALIZAÇÃO
+// -------------------------
 fetchTrips();

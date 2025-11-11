@@ -1,0 +1,42 @@
+[
+  {
+    "id": "flypt",
+    "name": "FlyPT",
+    "mode": [
+      "plane"
+    ],
+    "logo": "assets/logos/flypt.svg"
+  },
+  {
+    "id": "railpt",
+    "name": "RailPT",
+    "mode": [
+      "train"
+    ],
+    "logo": "assets/logos/railpt.svg"
+  },
+  {
+    "id": "busgo",
+    "name": "BusGo",
+    "mode": [
+      "bus"
+    ],
+    "logo": "assets/logos/busgo.svg"
+  },
+  {
+    "id": "skyline",
+    "name": "SkyLine Express",
+    "mode": [
+      "plane"
+    ],
+    "logo": "assets/logos/skyline.svg"
+  },
+  {
+    "id": "roadtrip",
+    "name": "RoadTrip",
+    "mode": [
+      "bus"
+    ],
+    "logo": "assets/logos/roadtrip.svg"
+  }
+]
