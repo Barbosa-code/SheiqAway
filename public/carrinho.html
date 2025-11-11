@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SheiqAway - Carrinho</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/carrinho.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Navbar importada -->
+    <div id="navbar-container"></div>
+
+    <!-- Conteúdo principal -->
+    <main class="container">
+      <h2>O Meu Carrinho</h2>
+      <div class="cart-content">
+        <!-- Grelha de bilhetes -->
+        <div id="cartContainer" class="tickets-grid"></div>
+
+        <!-- Barra lateral -->
+        <aside class="cart-sidebar">
+          <h3>Resumo do Carrinho</h3>
+          <ul id="cartSummary" class="cart-summary-list">
+            <!-- Resumo dos bilhetes será gerado dinamicamente -->
+          </ul>
+          <p id="totalPrice" class="cart-total">Total: €0.00</p>
+          <button id="checkoutBtn" class="checkoutBtn">
+            <i class="fas fa-shopping-cart"></i> Finalizar Compra
+          </button>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/navbar.js"></script>
+  <script src="js/cart.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+/* -------------------------
+   ESTILOS GERAIS
+------------------------- */
+body {
+  font-family: "Poppins", sans-serif;
+  background: #f9fafb;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 1200px;
+  width: 90%;
+  margin: 2rem auto;
+}
+
+h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #1f2937;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* -------------------------
+   LAYOUT DO CARRINHO
+------------------------- */
+.cart-content {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2rem;
+  align-items: stretch; /* 🔹 Sidebar e grelha niveladas */
+}
+
+/* Grelha dos bilhetes */
+.tickets-grid {
+  flex: 3;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.8rem;
+  margin-top: 0;
+}
+
+/* -------------------------
+   CARD DE BILHETE
+------------------------- */
+.ticket-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.8rem 1.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+}
+
+.ticket-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+.ticket-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.ticket-card p {
+  font-size: 0.95rem;
+  margin-bottom: 0.3rem;
+  color: #4b5563;
+}
+
+.ticket-card .price {
+  font-weight: 700;
+  color: #1f2937;
+  margin-top: 0.5rem;
+}
+
+.ticket-card .deleteBtn {
+  margin-top: 1rem;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 12px;
+  background: #ef4444;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.ticket-card .deleteBtn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+/* -------------------------
+   BARRA LATERAL DO CARRINHO
+------------------------- */
+.cart-sidebar {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem 1.8rem;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #e5e7eb;
+}
+
+/* Título */
+.cart-sidebar h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 0.8rem;
+}
+
+/* Lista do resumo */
+.cart-summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cart-summary-list li {
+  font-size: 1rem;
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.cart-summary-list li:last-child {
+  border-bottom: none;
+}
+
+.cart-summary-list li span {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Total */
+.cart-total {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 1rem 0 0.6rem 0; /* 🔹 Menor espaço entre o total e o botão */
+  text-align: right;
+  border-top: 2px solid #f3f4f6;
+  padding-top: 0.8rem;
+}
+
+/* Botão de checkout */
+.checkoutBtn {
+  width: 100%;
+  padding: 1rem;
+  background: #4caf50;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.25);
+}
+
+.checkoutBtn:hover {
+  background: #3e8e41;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(76, 175, 80, 0.35);
+}
+
+

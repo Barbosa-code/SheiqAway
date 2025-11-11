@@ -14,16 +14,16 @@ let loggedUser = JSON.parse(localStorage.getItem("loggedUser")) || null;
 // Atualiza UI da navbar
 function updateUserUI() {
   if (loggedUser) {
-    if(userInfo) {
+    if (userInfo) {
       userInfo.textContent = `Bem-vindo, ${loggedUser.username}`;
       userInfo.style.display = "inline-block";
     }
-    if(logoutBtn) logoutBtn.style.display = "inline-block";
-    if(loginBtnNav) loginBtnNav.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "inline-block";
+    if (loginBtnNav) loginBtnNav.style.display = "none";
   } else {
-    if(userInfo) userInfo.style.display = "none";
-    if(logoutBtn) logoutBtn.style.display = "none";
-    if(loginBtnNav) loginBtnNav.style.display = "inline-block";
+    if (userInfo) userInfo.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "none";
+    if (loginBtnNav) loginBtnNav.style.display = "inline-block";
   }
 }
 
@@ -33,7 +33,7 @@ if (logoutBtn) {
     localStorage.removeItem("loggedUser");
     loggedUser = null;
     updateUserUI();
-    window.location.href = "index.html"; 
+    window.location.href = "index.html";
   });
 }
 
@@ -51,8 +51,8 @@ if (loginBtnNav) {
 // Recupera bilhetes do usuário
 function getUserTickets() {
   const allTickets = JSON.parse(localStorage.getItem("tickets")) || [];
-  if(!loggedUser) return [];
-  return allTickets.filter(ticket => ticket.username === loggedUser.username);
+  if (!loggedUser) return [];
+  return allTickets.filter((ticket) => ticket.username === loggedUser.username);
 }
 
 // Salva todos os bilhetes
@@ -68,11 +68,12 @@ function displayTickets() {
   ticketsContainer.innerHTML = "";
 
   if (tickets.length === 0) {
-    ticketsContainer.innerHTML = "<p>Você ainda não comprou nenhum bilhete.</p>";
+    ticketsContainer.innerHTML =
+      "<p>Você ainda não comprou nenhum bilhete.</p>";
     return;
   }
 
-  tickets.forEach(ticket => {
+  tickets.forEach((ticket) => {
     const card = document.createElement("div");
     card.className = "ticket-card";
 
@@ -91,7 +92,7 @@ function displayTickets() {
       deleteBtn.addEventListener("click", () => {
         let allTickets = JSON.parse(localStorage.getItem("tickets")) || [];
         allTickets = allTickets.filter(
-          t => !(t.username === ticket.username && t.id === ticket.id)
+          (t) => !(t.username === ticket.username && t.id === ticket.id)
         );
         saveTickets(allTickets);
         displayTickets(); // Atualiza lista após apagar
@@ -100,6 +101,10 @@ function displayTickets() {
 
     ticketsContainer.appendChild(card);
   });
+}
+function getTicketsFromLocalStorage() {
+  const tickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
+  return tickets;
 }
 
 // -------------------------

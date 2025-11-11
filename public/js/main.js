@@ -64,17 +64,22 @@ function createTripCard(trip) {
   const card = document.createElement("div");
   card.className = "trip-card";
 
-  card.innerHTML = `
-    <h3>${trip.from} → ${trip.to}</h3>
-    <p>Data: ${trip.date} | Hora: ${trip.depart} - ${trip.arrive}</p>
-    <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>
-    <p>Preço: €${trip.price.base.toFixed(2)}</p>
-    <p>Tipo: ${trip.mode ? trip.mode : "N/A"}</p>
-    <p>Empresa: ${trip.providerId}</p>
-    <button class="buyBtn">Comprar</button>
+  card.innerHTML = `    
+    <h3>${trip.from} → ${trip.to}</h3>    
+    <p>Data: ${trip.date} | Hora: ${trip.depart} - ${trip.arrive}</p>    
+    <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>    
+    <p>Preço: €${trip.price.base.toFixed(2)}</p>    
+    <p>Tipo: ${trip.mode ? trip.mode : "N/A"}</p>    
+    <p>Empresa: ${trip.providerName}</p>    
+    ${
+      trip.providerLogo
+        ? `<img src="${trip.providerLogo}" alt="${trip.providerName}" class="provider-logo">`
+        : ""
+    }    
+    <button class="buyBtn">Adicionar ao Carrinho</button>    
   `;
 
-  // Comprar → salva bilhete no localStorage
+  // Comprar → salva bilhete no localStorage e redireciona para o carrinho
   card.querySelector(".buyBtn").addEventListener("click", () => {
     const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
 
@@ -83,7 +88,10 @@ function createTripCard(trip) {
       return;
     }
 
-    const allTickets = JSON.parse(localStorage.getItem("tickets")) || [];
+    // Obter os bilhetes do carrinho do localStorage
+    const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
+
+    // Criar o bilhete a ser adicionado ao carrinho
     const ticket = {
       id: Date.now(),
       username: loggedUser.username,
@@ -96,15 +104,30 @@ function createTripCard(trip) {
       stops: trip.stops,
       price: trip.price.base,
       mode: trip.mode || "",
+      provider: trip.providerName || "Não especificado", // Adiciona o nome do provider ao bilhete
     };
 
-    allTickets.push(ticket);
-    localStorage.setItem("tickets", JSON.stringify(allTickets));
-    alert("Bilhete comprado com sucesso!");
+    // Adicionar o bilhete ao carrinho
+    cartTickets.push(ticket);
+    localStorage.setItem("cartTickets", JSON.stringify(cartTickets));
+    alert("Bilhete adicionado ao carrinho com sucesso!");
+
+    
   });
 
   return card;
 }
+
+function updateCartCount() {
+  const tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+  const cartCount = document.getElementById("cartCount");
+  cartCount.textContent = tickets.length;
+}
+
+// Atualiza o contador ao carregar a página
+document.addEventListener("DOMContentLoaded", () => {
+  updateCartCount();
+});
 
 // -------------------------
 // EXIBIR VIAGENS
