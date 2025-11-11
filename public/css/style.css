@@ -152,22 +152,25 @@ body {
 ------------------------- */
 .trips-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Define o tamanho mínimo e máximo das colunas */
+  gap: 1.5rem; /* Espaçamento entre os cartões */
   margin-top: 1.5rem;
+  justify-content: start; /* Alinha os cartões à esquerda */
+  grid-auto-flow: row; /* Garante que os cartões fluem em linhas horizontais */
 }
 
 .trip-card {
   background: #fff;
   padding: 1rem;
   border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s, box-shadow 0.2s;
+  max-width: 350px; /* Define uma largura máxima para os cartões */
 }
 
 .trip-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
 
 .trip-card h3 {

@@ -18,19 +18,41 @@ const goLoginBtn = document.getElementById("goLogin");
 // -------------------------
 let trips = [];
 let currentPage = 1;
-const tripsPerPage = 8;
+const tripsPerPage = 6;
 
 // -------------------------
 // BUSCAR VIAGENS
 // -------------------------
-async function fetchTrips() {
+async function fetchTripsAndProviders() {
   try {
-    const response = await fetch("data/trips.json");
-    trips = await response.json();
+    // Busca as viagens
+    const tripsResponse = await fetch("data/trips.json");
+    const tripsData = await tripsResponse.json();
+
+    // Busca os providers
+    const providersResponse = await fetch("data/providers.json");
+    const providersData = await providersResponse.json();
+
+    // Adiciona os detalhes do provider às viagens
+    trips = tripsData.map((trip) => {
+      const provider = providersData.find((p) => p.id === trip.provider); // Associa pelo ID
+
+      // Adiciona logs para depuração
+      console.log("Trip Provider ID:", trip.provider);
+      console.log("Matched Provider:", provider);
+
+      return {
+        ...trip,
+        providerName: provider ? provider.name : "Não especificado", // Nome do provider
+        providerLogo: provider ? provider.logo : null, // Logo do provider
+      };
+    });
+
+    // Exibe as viagens e configura a paginação
     displayTrips(trips);
     setupPagination(trips);
   } catch (error) {
-    console.error("Erro ao carregar viagens:", error);
+    console.error("Erro ao carregar viagens ou providers:", error);
     tripsContainer.innerHTML = "<p>Não foi possível carregar as viagens.</p>";
   }
 }
@@ -47,6 +69,8 @@ function createTripCard(trip) {
     <p>Data: ${trip.date} | Hora: ${trip.depart} - ${trip.arrive}</p>
     <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>
     <p>Preço: €${trip.price.base.toFixed(2)}</p>
+    <p>Tipo: ${trip.mode ? trip.mode : "N/A"}</p>
+    <p>Empresa: ${trip.providerId}</p>
     <button class="buyBtn">Comprar</button>
   `;
 
@@ -71,7 +95,7 @@ function createTripCard(trip) {
       durationMin: trip.durationMin,
       stops: trip.stops,
       price: trip.price.base,
-      mode: trip.mode || ""
+      mode: trip.mode || "",
     };
 
     allTickets.push(ticket);
@@ -97,8 +121,32 @@ function displayTrips(tripsList) {
     return;
   }
 
-  paginatedTrips.forEach(trip => {
+  paginatedTrips.forEach((trip) => {
     tripsContainer.appendChild(createTripCard(trip));
+  });
+}
+
+function displayProviders(providers) {
+  // Limpa o conteúdo anterior
+  providersContainer.innerHTML = "";
+
+  // Verifica se há providers disponíveis
+  if (providers.length === 0) {
+    providersContainer.innerHTML = "<p>Nenhum fornecedor encontrado.</p>";
+    return;
+  }
+
+  // Cria os elementos HTML para cada provider
+  providers.forEach((provider) => {
+    const providerCard = document.createElement("div");
+    providerCard.className = "provider-card";
+
+    providerCard.innerHTML = `
+      <h3>${provider.name}</h3>
+      <p>${provider.description}</p>
+      <p><strong>Website:</strong> <a href="${provider.website}" target="_blank">${provider.website}</a></p>`;
+
+    providersContainer.appendChild(providerCard);
   });
 }
 
@@ -112,13 +160,17 @@ function applyFilters() {
   const toValue = toInput.value.trim().toLowerCase();
   const dateValue = dateInput.value;
 
-  if (fromValue) filtered = filtered.filter(t => t.from.toLowerCase().includes(fromValue));
-  if (toValue) filtered = filtered.filter(t => t.to.toLowerCase().includes(toValue));
-  if (dateValue) filtered = filtered.filter(t => t.date === dateValue);
+  if (fromValue)
+    filtered = filtered.filter((t) => t.from.toLowerCase().includes(fromValue));
+  if (toValue)
+    filtered = filtered.filter((t) => t.to.toLowerCase().includes(toValue));
+  if (dateValue) filtered = filtered.filter((t) => t.date === dateValue);
 
   const sortValue = sortSelect.value;
-  if (sortValue === "price") filtered.sort((a, b) => a.price.base - b.price.base);
-  else if (sortValue === "duration") filtered.sort((a, b) => a.durationMin - b.durationMin);
+  if (sortValue === "price")
+    filtered.sort((a, b) => a.price.base - b.price.base);
+  else if (sortValue === "duration")
+    filtered.sort((a, b) => a.durationMin - b.durationMin);
 
   currentPage = 1;
   displayTrips(filtered);
@@ -158,7 +210,7 @@ function setupPagination(tripsList) {
 // EVENTOS
 // -------------------------
 searchBtn.addEventListener("click", applyFilters);
-[fromInput, toInput, dateInput].forEach(input => {
+[fromInput, toInput, dateInput].forEach((input) => {
   input.addEventListener("input", () => {
     if (!input.value) applyFilters();
   });
@@ -166,13 +218,16 @@ searchBtn.addEventListener("click", applyFilters);
 sortSelect.addEventListener("change", applyFilters);
 
 // Modal de login
-closeModal.addEventListener("click", () => loginModal.style.display = "none");
-window.addEventListener("click", e => {
+closeModal.addEventListener("click", () => (loginModal.style.display = "none"));
+window.addEventListener("click", (e) => {
   if (e.target === loginModal) loginModal.style.display = "none";
 });
-goLoginBtn.addEventListener("click", () => window.location.href = "login.html");
+goLoginBtn.addEventListener(
+  "click",
+  () => (window.location.href = "login.html")
+);
 
 // -------------------------
 // INICIALIZAÇÃO
 // -------------------------
-fetchTrips();
+fetchTripsAndProviders();
