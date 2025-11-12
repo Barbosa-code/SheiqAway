@@ -373,3 +373,116 @@ button:disabled {
   text-decoration: none;
   font-weight: 600;
 }
+
+/* -------------------------
+   ESTILO DAS RESERVAS
+------------------------- */
+.ticket-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.2rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.ticket-card h3 {
+  margin-bottom: 0.6rem;
+  color: #222;
+}
+
+.ticket-card p {
+  margin: 0.3rem 0;
+  color: #444;
+}
+
+.ticket-card strong {
+  color: #0069d9;
+}
+
+/* -------------------------
+   AÇÕES (botões)
+------------------------- */
+.ticket-card .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+/* botão base */
+.ticket-card .actions button {
+  flex: 1;
+  min-width: 100px;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.25s ease, transform 0.1s ease;
+}
+
+/* cores */
+.btn-change {
+  background-color: #007bff;
+}
+
+.btn-cancel {
+  background-color: #dc3545;
+}
+
+.btn-delete {
+  background-color: #6c757d;
+}
+
+/* efeitos hover */
+.btn-change:hover { background-color: #0056b3; }
+.btn-cancel:hover { background-color: #c82333; }
+.btn-delete:hover { background-color: #5a6268; }
+
+/* efeitos clique */
+.ticket-card .actions button:active {
+  transform: scale(0.97);
+}
+
+/* -------------------------
+   ESTADOS / DESATIVADOS
+------------------------- */
+.ticket-card button[disabled],
+.ticket-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+/* Canceladas visualmente diferentes */
+.ticket-card strong {
+  text-transform: capitalize;
+}
+
+.ticket-card strong:contains("canceled"),
+.ticket-card strong:contains("cancelada") {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* -------------------------
+   RESPONSIVO
+------------------------- */
+@media (max-width: 600px) {
+  .ticket-card .actions {
+    flex-direction: column;
+  }
+  .ticket-card .actions button {
+    width: 100%;
+  }
+}
+
+
+

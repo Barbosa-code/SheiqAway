@@ -1,0 +1,37 @@
+[
+  {
+    "id": "PKG-001",
+    "name": "City Break Ibérico",
+    "description": "Lisboa → Madrid (bus) + Madrid → Barcelona (train). Perfeito para 2 capitais em sequência.",
+    "price": 40,
+    "trips": ["TRIP-025", "TRIP-010"]
+  },
+  {
+    "id": "PKG-002",
+    "name": "Rota Atlântica",
+    "description": "Porto → Lisboa (train) + Lisboa → Londres (train). Combo confortável pelo Atlântico.",
+    "price": 115,
+    "trips": ["TRIP-003", "TRIP-006"]
+  },
+  {
+    "id": "PKG-003",
+    "name": "Mediterrâneo Aéreo",
+    "description": "Coimbra → Barcelona (plane) + Barcelona → Faro (plane). Sol e tapas num só pacote.",
+    "price": 18,
+    "trips": ["TRIP-001", "TRIP-033"]
+  },
+  {
+    "id": "PKG-004",
+    "name": "Capitais Clássicas",
+    "description": "Londres → Paris (train) + Paris → Roma (train). História, arte e gastronomia.",
+    "price": 120,
+    "trips": ["TRIP-011", "TRIP-031"]
+  },
+  {
+    "id": "PKG-005",
+    "name": "Ibéria Intensiva",
+    "description": "Braga → Barcelona (bus) + Lisboa → Barcelona (bus) + Madrid → Roma (plane). Três saltos intensos!",
+    "price": 225,
+    "trips": ["TRIP-018", "TRIP-027", "TRIP-009"]
+  }
+]

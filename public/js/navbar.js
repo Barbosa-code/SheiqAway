@@ -16,7 +16,8 @@ async function loadNavbar() {
 
   function updateUserUI() {
     if (loggedUser) {
-      userInfo.textContent = `Bem-vindo, ${loggedUser.username}`;
+      userInfo.textContent = `
+                                             ${loggedUser.username}`;
       userInfo.style.display = "inline-block";
       logoutBtn.style.display = "inline-block";
       loginBtn.style.display = "none";

@@ -27,6 +27,14 @@
             <!-- Resumo dos bilhetes será gerado dinamicamente -->
           </ul>
           <p id="totalPrice" class="cart-total">Total: €0.00</p>
+          <div class="loyalty">
+  <p>Pontos disponíveis: <strong id="userPoints">0</strong></p>
+  <label for="usePoints">Usar pontos:</label>
+  <input id="usePoints" type="number" min="0" step="1" value="0" />
+  <button id="applyPoints" class="applyPointsBtn">Aplicar</button>
+  <p>Desconto: €<strong id="discountValue">0.00</strong></p>
+  <p>Total a pagar: €<strong id="totalToPay">0.00</strong></p>
+</div>
           <button id="checkoutBtn" class="checkoutBtn">
             <i class="fas fa-shopping-cart"></i> Finalizar Compra
           </button>
@@ -35,9 +43,9 @@
     </main>
   </div>
 
-  <script src="js/navbar.js"></script>
-  <script src="js/cart.js"></script>
-  <script src="js/main.js" ></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/auth.js" defer></script>   <!-- <-- necessário para pontos/login -->
+<script src="js/cart.js" defer></script>
   
   
 </body>
