@@ -1,6 +1,41 @@
 // -------------------------
 // INICIALIZAÇÃO
 // -------------------------
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("confirm-modal");
+    const msgEl = document.getElementById("confirm-message");
+    const yesBtn = document.getElementById("confirm-yes");
+    const noBtn = document.getElementById("confirm-no");
+
+    if (!modal || !msgEl || !yesBtn || !noBtn) {
+      resolve(false);
+      return;
+    }
+
+    msgEl.textContent = message;
+    modal.classList.add("active");
+
+    const cleanUp = () => {
+      modal.classList.remove("active");
+      yesBtn.removeEventListener("click", onYes);
+      noBtn.removeEventListener("click", onNo);
+    };
+
+    const onYes = () => {
+      cleanUp();
+      resolve(true);
+    };
+
+    const onNo = () => {
+      cleanUp();
+      resolve(false);
+    };
+
+    yesBtn.addEventListener("click", onYes);
+    noBtn.addEventListener("click", onNo);
+  });
+}
 
 
 
