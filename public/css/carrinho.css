@@ -30,9 +30,8 @@ h2 {
 ------------------------- */
 .cart-content {
   display: flex;
-  flex-wrap: nowrap;
   gap: 2rem;
-  align-items: stretch; /* 🔹 Sidebar e grelha niveladas */
+  align-items: flex-start; /* sidebar e grelha niveladas no topo */
 }
 
 /* Grelha dos bilhetes */
@@ -41,7 +40,14 @@ h2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.8rem;
-  margin-top: 0;
+  justify-content: start; /* não esticar se houver só 1 card */
+}
+
+.tickets-grid .ticket-card {
+  max-width: 400px;  /* não ocupa largura total se estiver sozinho */
+  width: 100%;
+  margin: 0 auto;    /* centra o card */
+  align-self: start;
 }
 
 /* -------------------------
@@ -49,9 +55,9 @@ h2 {
 ------------------------- */
 .ticket-card {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 1.8rem 1.5rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 2rem 1.8rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -65,7 +71,7 @@ h2 {
 }
 
 .ticket-card h3 {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   margin-bottom: 0.5rem;
   color: #111827;
 }
@@ -86,7 +92,7 @@ h2 {
   margin-top: 1rem;
   padding: 0.7rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ef4444;
   color: #fff;
   font-weight: 600;
@@ -103,21 +109,20 @@ h2 {
    BARRA LATERAL DO CARRINHO
 ------------------------- */
 .cart-sidebar {
-  flex: 1;
+  flex: 1.2; /* aumenta largura relativa */
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  padding: 2rem 1.8rem;
-  align-self: stretch;
+  border-radius: 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem 2rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 1.5rem;
   border: 1px solid #e5e7eb;
 }
 
 /* Título */
 .cart-sidebar h3 {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #111827;
   margin-bottom: 1.5rem;
@@ -154,34 +159,79 @@ h2 {
 
 /* Total */
 .cart-total {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 1rem 0 0.6rem 0; /* 🔹 Menor espaço entre o total e o botão */
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 1rem 0 0.6rem 0;
   text-align: right;
   border-top: 2px solid #f3f4f6;
   padding-top: 0.8rem;
 }
 
-/* Botão de checkout */
-.checkoutBtn {
+/* Inputs de pontos */
+.cart-sidebar input {
   width: 100%;
-  padding: 1rem;
+  padding: 0.7rem;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.cart-sidebar input:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Botões */
+.applyPointsBtn {
+  width: 100%;
+  padding: 0.8rem;
   background: #4caf50;
   color: #fff;
-  font-size: 1rem;
   font-weight: 600;
   border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.25);
+  margin-bottom: 1rem;
+}
+
+.applyPointsBtn:hover {
+  background: #3e8e41;
+}
+
+/* Botão de checkout */
+.checkoutBtn {
+  width: 100%;
+  padding: 1.2rem;
+  background: #4caf50;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 14px rgba(76, 175, 80, 0.35);
 }
 
 .checkoutBtn:hover {
   background: #3e8e41;
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(76, 175, 80, 0.35);
 }
 
+/* -------------------------
+   RESPONSIVO
+------------------------- */
+@media (max-width: 1024px) {
+  .cart-content {
+    flex-direction: column;
+  }
 
+  .cart-sidebar {
+    width: 100%;
+    flex: unset;
+  }
+}

@@ -150,7 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const price = Number(r.price ?? 0);
   const canceled = r.status === "canceled";
 
-  card.className = `ticket-card ${isPackage ? "package" : ""}`;
+  card.className = `ticket-card ${isPackage ? "package" : ""}`.trim();
+
 
   if (isPackage) {
     // ----- CARD DE PACOTE -----

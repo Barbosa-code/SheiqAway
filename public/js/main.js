@@ -222,32 +222,32 @@ function setFiltersDisabled(disabled) {
 }
 
 function ensureToggleButton() {
-  let title = document.getElementById("mainTitle");
-  let btn = document.getElementById("toggleViewBtn");
+  const resultsHeader = document.querySelector(".results-header");
+  if (!resultsHeader) return;
 
+  // Cria o título apenas se não existir
+  let title = document.getElementById("mainTitle");
   if (!title) {
-    title = document.createElement("h2");
+    title = document.createElement("span"); // span dentro da mesma div do botão
     title.id = "mainTitle";
     title.textContent = "Viagens Disponíveis";
-    tripsContainer?.parentElement?.insertBefore(title, tripsContainer);
+    title.style.marginRight = "1rem"; // espaçamento entre texto e botão
+    resultsHeader.prepend(title);
   }
 
+  // Cria o botão apenas se não existir
+  let btn = document.getElementById("toggleViewBtn");
   if (!btn) {
-    const wrap = document.createElement("div");
-    wrap.className = "top-bar";
-    title?.parentElement?.insertBefore(wrap, title);
-    wrap.appendChild(title);
-
     btn = document.createElement("button");
     btn.id = "toggleViewBtn";
     btn.className = "toggle-btn";
     btn.textContent = "Ver Pacotes";
-    wrap.appendChild(btn);
+    resultsHeader.appendChild(btn);
   }
 
   btn.addEventListener("click", async () => {
-    showingPackages = !showingPackages;
     const pag = document.getElementById("pagination");
+    showingPackages = !showingPackages;
 
     if (showingPackages) {
       title.textContent = "Pacotes Promocionais";
@@ -265,6 +265,7 @@ function ensureToggleButton() {
     }
   });
 }
+
 
 async function showPackages() {
   try {
