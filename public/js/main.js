@@ -2,13 +2,15 @@
 // ELEMENTOS DO DOM
 // -------------------------
 const tripsContainer = document.getElementById("tripsContainer");
-const searchBtn      = document.getElementById("searchBtn");
-const sortSelect     = document.getElementById("sort");
-const fromInput      = document.getElementById("from");
-const toInput        = document.getElementById("to");
-const dateInput      = document.getElementById("date");
-const modeSelect     = document.getElementById("mode") || document.getElementById("modeSelect");
-const maxPriceEl     = document.getElementById("maxPrice") || document.getElementById("priceMax");
+const searchBtn = document.getElementById("searchBtn");
+const sortSelect = document.getElementById("sort");
+const fromInput = document.getElementById("from");
+const toInput = document.getElementById("to");
+const dateInput = document.getElementById("date");
+const modeSelect =
+  document.getElementById("mode") || document.getElementById("modeSelect");
+const maxPriceEl =
+  document.getElementById("maxPrice") || document.getElementById("priceMax");
 
 // Modal de login (se existir nesta página)
 const loginModal = document.getElementById("loginModal");
@@ -27,7 +29,7 @@ let showingPackages = false;
 // HELPERS
 // -------------------------
 const getPrice = (t) =>
-  (typeof t.price === "number" ? t.price : (t.price?.base ?? 0));
+  typeof t.price === "number" ? t.price : t.price?.base ?? 0;
 
 function updateCartCount() {
   const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
@@ -44,8 +46,11 @@ async function fetchTripsAndProviders() {
     if (!tripsRes.ok) throw new Error(`trips.json: HTTP ${tripsRes.status}`);
     const tripsData = await tripsRes.json();
 
-    const providersRes = await fetch("data/providers.json", { cache: "no-store" });
-    if (!providersRes.ok) throw new Error(`providers.json: HTTP ${providersRes.status}`);
+    const providersRes = await fetch("data/providers.json", {
+      cache: "no-store",
+    });
+    if (!providersRes.ok)
+      throw new Error(`providers.json: HTTP ${providersRes.status}`);
     const providersData = await providersRes.json();
 
     // mapear por providerId (não 'provider')
@@ -64,7 +69,9 @@ async function fetchTripsAndProviders() {
   } catch (error) {
     console.error("Erro ao carregar viagens/providers:", error);
     if (tripsContainer)
-      tripsContainer.innerHTML = `<p>Não foi possível carregar as viagens.<br><small>${String(error.message || error)}</small></p>`;
+      tripsContainer.innerHTML = `<p>Não foi possível carregar as viagens.<br><small>${String(
+        error.message || error
+      )}</small></p>`;
   }
 }
 
@@ -79,7 +86,9 @@ function createTripCard(trip) {
 
   card.innerHTML = `
     <h3>${trip.from} → ${trip.to}</h3>
-    <p>Data: ${trip.date} | Hora: ${trip.depart ?? ""} - ${trip.arrive ?? ""}</p>
+    <p>Data: ${trip.date} | Hora: ${trip.depart ?? ""} - ${
+    trip.arrive ?? ""
+  }</p>
     <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>
     <p>Preço: €${basePrice.toFixed(2)}</p>
     <p>Tipo: ${trip.mode || "N/A"}</p>
@@ -97,7 +106,8 @@ function createTripCard(trip) {
     }
 
     const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
-    const usernameKey = loggedUser.email || loggedUser.username || loggedUser.name || "guest";
+    const usernameKey =
+      loggedUser.email || loggedUser.username || loggedUser.name || "guest";
 
     const ticket = {
       id: Date.now() + Math.random(),
@@ -153,20 +163,29 @@ function applyFilters() {
   let filtered = trips.slice();
 
   const fromValue = (fromInput?.value || "").trim().toLowerCase();
-  const toValue   = (toInput?.value || "").trim().toLowerCase();
-  const dateValue = (dateInput?.value || "");
+  const toValue = (toInput?.value || "").trim().toLowerCase();
+  const dateValue = dateInput?.value || "";
   const modeValue = (modeSelect?.value || "").toLowerCase();
 
-  if (fromValue) filtered = filtered.filter(t => (t.from || "").toLowerCase().includes(fromValue));
-  if (toValue)   filtered = filtered.filter(t => (t.to   || "").toLowerCase().includes(toValue));
-  if (dateValue) filtered = filtered.filter(t => t.date === dateValue);
-  if (modeValue) filtered = filtered.filter(t => (t.mode || "").toLowerCase() === modeValue);
+  if (fromValue)
+    filtered = filtered.filter((t) =>
+      (t.from || "").toLowerCase().includes(fromValue)
+    );
+  if (toValue)
+    filtered = filtered.filter((t) =>
+      (t.to || "").toLowerCase().includes(toValue)
+    );
+  if (dateValue) filtered = filtered.filter((t) => t.date === dateValue);
+  if (modeValue)
+    filtered = filtered.filter(
+      (t) => (t.mode || "").toLowerCase() === modeValue
+    );
 
   // preço máximo
   const maxPriceRaw = maxPriceEl?.value ?? "";
   const maxPrice = maxPriceRaw === "" ? null : Number(maxPriceRaw);
   if (maxPrice !== null && !Number.isNaN(maxPrice)) {
-    filtered = filtered.filter(t => getPrice(t) <= maxPrice);
+    filtered = filtered.filter((t) => getPrice(t) <= maxPrice);
   }
 
   // ordenação
@@ -174,7 +193,9 @@ function applyFilters() {
   if (sortValue === "price") {
     filtered.sort((a, b) => getPrice(a) - getPrice(b));
   } else if (sortValue === "duration") {
-    filtered.sort((a, b) => (a.durationMin ?? Infinity) - (b.durationMin ?? Infinity));
+    filtered.sort(
+      (a, b) => (a.durationMin ?? Infinity) - (b.durationMin ?? Infinity)
+    );
   }
 
   currentPage = 1;
@@ -217,8 +238,17 @@ function setupPagination(tripsList) {
 // PACOTES (toggle + render como 1 item)
 // -------------------------
 function setFiltersDisabled(disabled) {
-  [fromInput, toInput, dateInput, modeSelect, maxPriceEl, searchBtn, sortSelect]
-    .forEach(el => { if (el) el.disabled = !!disabled; });
+  [
+    fromInput,
+    toInput,
+    dateInput,
+    modeSelect,
+    maxPriceEl,
+    searchBtn,
+    sortSelect,
+  ].forEach((el) => {
+    if (el) el.disabled = !!disabled;
+  });
 }
 
 function ensureToggleButton() {
@@ -266,36 +296,47 @@ function ensureToggleButton() {
   });
 }
 
-
 async function showPackages() {
   try {
     if (!Array.isArray(trips) || trips.length === 0) {
       await fetchTripsAndProviders();
     }
 
-    const tryPaths = ["data/packages.json", "./data/packages.json", "/data/packages.json"];
-    let pkRes = null, errs = [];
+    const tryPaths = [
+      "data/packages.json",
+      "./data/packages.json",
+      "/data/packages.json",
+    ];
+    let pkRes = null,
+      errs = [];
     for (const p of tryPaths) {
       try {
         const r = await fetch(p, { cache: "no-store" });
-        if (r.ok) { pkRes = r; break; }
+        if (r.ok) {
+          pkRes = r;
+          break;
+        }
         errs.push(`${p}: HTTP ${r.status}`);
-      } catch (e) { errs.push(`${p}: ${e.message}`); }
+      } catch (e) {
+        errs.push(`${p}: ${e.message}`);
+      }
     }
-    if (!pkRes) throw new Error(`Falha a obter packages.json → ${errs.join(" | ")}`);
+    if (!pkRes)
+      throw new Error(`Falha a obter packages.json → ${errs.join(" | ")}`);
 
     const packages = await pkRes.json();
-    if (!Array.isArray(packages)) throw new Error("packages.json deve ser um array.");
+    if (!Array.isArray(packages))
+      throw new Error("packages.json deve ser um array.");
 
     // índice só para listar detalhes das trips incluídas (opcional)
-    const byId = new Map(trips.map(t => [t.id, t]));
+    const byId = new Map(trips.map((t) => [t.id, t]));
 
     tripsContainer.innerHTML = "";
     let rendered = 0;
 
-    packages.forEach(pkg => {
+    packages.forEach((pkg) => {
       const ids = Array.isArray(pkg.trips) ? pkg.trips : [];
-      const included = ids.map(id => byId.get(id)).filter(Boolean);
+      const included = ids.map((id) => byId.get(id)).filter(Boolean);
       const total = Number(pkg.price) || 0;
 
       const card = document.createElement("div");
@@ -307,9 +348,19 @@ async function showPackages() {
         <details style="margin:.6rem 0;">
           <summary>Ver viagens incluídas</summary>
           <ul style="margin:.4rem 0 0 .8rem;">
-            ${included.length
-              ? included.map(t => `<li>${t.from} → ${t.to} • ${t.date} • €${getPrice(t).toFixed(2)}</li>`).join("")
-              : (ids.length ? ids.map(id => `<li>${id}</li>`).join("") : "<li>(Sem detalhe)</li>")
+            ${
+              included.length
+                ? included
+                    .map(
+                      (t) =>
+                        `<li>${t.from} → ${t.to} • ${t.date} • €${getPrice(
+                          t
+                        ).toFixed(2)}</li>`
+                    )
+                    .join("")
+                : ids.length
+                ? ids.map((id) => `<li>${id}</li>`).join("")
+                : "<li>(Sem detalhe)</li>"
             }
           </ul>
         </details>
@@ -335,8 +386,8 @@ async function showPackages() {
           packageId: pkg.id,
           packageName: pkg.name || "Pacote",
           description: pkg.description || "",
-          trips: ids,     // referência às viagens incluídas (sem dividir)
-          price: total    // preço TOTAL do pacote
+          trips: ids, // referência às viagens incluídas (sem dividir)
+          price: total, // preço TOTAL do pacote
         });
 
         localStorage.setItem("cartTickets", JSON.stringify(cart));
@@ -357,7 +408,9 @@ async function showPackages() {
     console.error("Erro ao carregar pacotes:", err);
     tripsContainer.innerHTML = `
       <p>Erro ao carregar pacotes.</p>
-      <p style="font-size:.9rem;opacity:.9">Detalhe: ${String(err.message || err)}</p>
+      <p style="font-size:.9rem;opacity:.9">Detalhe: ${String(
+        err.message || err
+      )}</p>
     `;
   }
 }
@@ -366,13 +419,23 @@ async function showPackages() {
 // EVENTOS
 // -------------------------
 searchBtn?.addEventListener("click", applyFilters);
-[fromInput, toInput, dateInput, modeSelect, maxPriceEl].forEach((el) => el?.addEventListener("input", applyFilters));
+[fromInput, toInput, dateInput, modeSelect, maxPriceEl].forEach((el) =>
+  el?.addEventListener("input", applyFilters)
+);
 sortSelect?.addEventListener("change", applyFilters);
 
 // Modal login (se existir)
-closeModal?.addEventListener("click", () => (loginModal.style.display = "none"));
-window.addEventListener("click", (e) => { if (e.target === loginModal) loginModal.style.display = "none"; });
-goLoginBtn?.addEventListener("click", () => (window.location.href = "login.html"));
+closeModal?.addEventListener(
+  "click",
+  () => (loginModal.style.display = "none")
+);
+window.addEventListener("click", (e) => {
+  if (e.target === loginModal) loginModal.style.display = "none";
+});
+goLoginBtn?.addEventListener(
+  "click",
+  () => (window.location.href = "login.html")
+);
 
 // -------------------------
 // INIT

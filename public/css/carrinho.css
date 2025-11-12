@@ -130,6 +130,16 @@ h2 {
   padding-bottom: 0.8rem;
 }
 
+.cart-sidebar p {
+  padding-bottom: 4px;
+}
+.cart-sidebar label{
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  display: block;
+  color: #374151;
+}
+
 /* Lista do resumo */
 .cart-summary-list {
   list-style: none;
