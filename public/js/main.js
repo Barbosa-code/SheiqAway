@@ -25,6 +25,38 @@ let currentPage = 1;
 const tripsPerPage = 6;
 let showingPackages = false;
 
+let popupModal = document.getElementById("popup-modal");
+if (!popupModal) {
+  popupModal = document.createElement("div");
+  popupModal.id = "popup-modal";
+  popupModal.innerHTML = `
+    <div class="popup-overlay"></div>
+    <div class="popup-box">
+      <p id="popup-message">Bilhete adicionado ao carrinho com sucesso!</p>
+      <button id="popup-close">Fechar</button>
+    </div>
+  `;
+  document.body.appendChild(popupModal);
+}
+const popupMessage = document.getElementById("popup-message");
+const popupCloseBtn = document.getElementById("popup-close");
+
+function showPopup(message) {
+  popupMessage.textContent = message;
+  popupModal.classList.add("active");
+
+  // Fechar automaticamente após 3 segundos
+  
+}
+
+// Fechar manualmente
+popupCloseBtn.addEventListener("click", () => {
+  popupModal.classList.remove("active");
+});
+popupModal.querySelector(".popup-overlay").addEventListener("click", () => {
+  popupModal.classList.remove("active");
+});
+
 // -------------------------
 // HELPERS
 // -------------------------
@@ -127,7 +159,7 @@ function createTripCard(trip) {
     cartTickets.push(ticket);
     localStorage.setItem("cartTickets", JSON.stringify(cartTickets));
     updateCartCount();
-    alert("Bilhete adicionado ao carrinho com sucesso!");
+    showPopup("Bilhete adicionado ao carrinho com sucesso!");
   });
 
   return card;
@@ -392,7 +424,7 @@ async function showPackages() {
 
         localStorage.setItem("cartTickets", JSON.stringify(cart));
         updateCartCount?.();
-        alert(`Pacote "${pkg.name || "Pacote"}" adicionado ao carrinho!`);
+        showPopup(`Pacote "${pkg.name || "Pacote"}" adicionado ao carrinho!`);
       });
 
       tripsContainer.appendChild(card);

@@ -1,6 +1,9 @@
 // -------------------------
 // INICIALIZAÇÃO
 // -------------------------
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const ticketsContainer = document.getElementById("ticketsContainer");
   const userInfo = document.getElementById("userInfo");
