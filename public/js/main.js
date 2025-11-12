@@ -21,39 +21,41 @@ let currentPage = 1;
 const tripsPerPage = 6;
 
 // -------------------------
-// BUSCAR VIAGENS
+// FUNÇÃO PARA ATUALIZAR CONTADOR DO CARRINHO
+// -------------------------
+function updateCartCount() {
+  const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
+  const cartCount = document.getElementById("cartCount");
+  if (cartCount) cartCount.textContent = cartTickets.length;
+}
+
+// -------------------------
+// BUSCAR VIAGENS E PROVIDERS
 // -------------------------
 async function fetchTripsAndProviders() {
   try {
-    // Busca as viagens
     const tripsResponse = await fetch("data/trips.json");
     const tripsData = await tripsResponse.json();
 
-    // Busca os providers
     const providersResponse = await fetch("data/providers.json");
     const providersData = await providersResponse.json();
 
-    // Adiciona os detalhes do provider às viagens
+    // Adiciona providerName e providerLogo a cada viagem
     trips = tripsData.map((trip) => {
-      const provider = providersData.find((p) => p.id === trip.provider); // Associa pelo ID
-
-      // Adiciona logs para depuração
-      console.log("Trip Provider ID:", trip.provider);
-      console.log("Matched Provider:", provider);
-
+      const provider = providersData.find((p) => p.id === trip.provider);
       return {
         ...trip,
-        providerName: provider ? provider.name : "Não especificado", // Nome do provider
-        providerLogo: provider ? provider.logo : null, // Logo do provider
+        providerName: provider ? provider.name : "Não especificado",
+        providerLogo: provider ? provider.logo : null,
       };
     });
 
-    // Exibe as viagens e configura a paginação
     displayTrips(trips);
     setupPagination(trips);
   } catch (error) {
     console.error("Erro ao carregar viagens ou providers:", error);
-    tripsContainer.innerHTML = "<p>Não foi possível carregar as viagens.</p>";
+    if (tripsContainer)
+      tripsContainer.innerHTML = "<p>Não foi possível carregar as viagens.</p>";
   }
 }
 
@@ -64,36 +66,33 @@ function createTripCard(trip) {
   const card = document.createElement("div");
   card.className = "trip-card";
 
-  card.innerHTML = `    
-    <h3>${trip.from} → ${trip.to}</h3>    
-    <p>Data: ${trip.date} | Hora: ${trip.depart} - ${trip.arrive}</p>    
-    <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>    
-    <p>Preço: €${trip.price.base.toFixed(2)}</p>    
-    <p>Tipo: ${trip.mode ? trip.mode : "N/A"}</p>    
-    <p>Empresa: ${trip.providerName}</p>    
+  card.innerHTML = `
+    <h3>${trip.from} → ${trip.to}</h3>
+    <p>Data: ${trip.date} | Hora: ${trip.depart} - ${trip.arrive}</p>
+    <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>
+    <p>Preço: €${trip.price.base.toFixed(2)}</p>
+    <p>Tipo: ${trip.mode || "N/A"}</p>
+    <p>Empresa: ${trip.providerName}</p>
     ${
       trip.providerLogo
         ? `<img src="${trip.providerLogo}" alt="${trip.providerName}" class="provider-logo">`
         : ""
-    }    
-    <button class="buyBtn">Adicionar ao Carrinho</button>    
+    }
+    <button class="buyBtn">Adicionar ao Carrinho</button>
   `;
 
-  // Comprar → salva bilhete no localStorage e redireciona para o carrinho
+  // Adicionar ao carrinho
   card.querySelector(".buyBtn").addEventListener("click", () => {
     const loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
-
     if (!loggedUser) {
       loginModal.style.display = "block";
       return;
     }
 
-    // Obter os bilhetes do carrinho do localStorage
     const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
 
-    // Criar o bilhete a ser adicionado ao carrinho
     const ticket = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       username: loggedUser.username,
       from: trip.from,
       to: trip.to,
@@ -102,39 +101,27 @@ function createTripCard(trip) {
       arrive: trip.arrive,
       durationMin: trip.durationMin,
       stops: trip.stops,
-      price: trip.price.base,
+      price: trip.price.base || trip.price || 0,
       mode: trip.mode || "",
-      provider: trip.providerName || "Não especificado", // Adiciona o nome do provider ao bilhete
+      provider: trip.providerName || "Não especificado",
     };
 
-    // Adicionar o bilhete ao carrinho
     cartTickets.push(ticket);
     localStorage.setItem("cartTickets", JSON.stringify(cartTickets));
+    updateCartCount();
     alert("Bilhete adicionado ao carrinho com sucesso!");
-
-    
   });
 
   return card;
 }
 
-function updateCartCount() {
-  const tickets = JSON.parse(localStorage.getItem("tickets")) || [];
-  const cartCount = document.getElementById("cartCount");
-  cartCount.textContent = tickets.length;
-}
-
-// Atualiza o contador ao carregar a página
-document.addEventListener("DOMContentLoaded", () => {
-  updateCartCount();
-});
-
 // -------------------------
 // EXIBIR VIAGENS
 // -------------------------
 function displayTrips(tripsList) {
-  tripsContainer.innerHTML = "";
+  if (!tripsContainer) return;
 
+  tripsContainer.innerHTML = "";
   const start = (currentPage - 1) * tripsPerPage;
   const end = start + tripsPerPage;
   const paginatedTrips = tripsList.slice(start, end);
@@ -149,51 +136,22 @@ function displayTrips(tripsList) {
   });
 }
 
-function displayProviders(providers) {
-  // Limpa o conteúdo anterior
-  providersContainer.innerHTML = "";
-
-  // Verifica se há providers disponíveis
-  if (providers.length === 0) {
-    providersContainer.innerHTML = "<p>Nenhum fornecedor encontrado.</p>";
-    return;
-  }
-
-  // Cria os elementos HTML para cada provider
-  providers.forEach((provider) => {
-    const providerCard = document.createElement("div");
-    providerCard.className = "provider-card";
-
-    providerCard.innerHTML = `
-      <h3>${provider.name}</h3>
-      <p>${provider.description}</p>
-      <p><strong>Website:</strong> <a href="${provider.website}" target="_blank">${provider.website}</a></p>`;
-
-    providersContainer.appendChild(providerCard);
-  });
-}
-
 // -------------------------
 // FILTROS E ORDENAÇÃO
 // -------------------------
 function applyFilters() {
   let filtered = trips;
-
   const fromValue = fromInput.value.trim().toLowerCase();
   const toValue = toInput.value.trim().toLowerCase();
   const dateValue = dateInput.value;
 
-  if (fromValue)
-    filtered = filtered.filter((t) => t.from.toLowerCase().includes(fromValue));
-  if (toValue)
-    filtered = filtered.filter((t) => t.to.toLowerCase().includes(toValue));
+  if (fromValue) filtered = filtered.filter((t) => t.from.toLowerCase().includes(fromValue));
+  if (toValue) filtered = filtered.filter((t) => t.to.toLowerCase().includes(toValue));
   if (dateValue) filtered = filtered.filter((t) => t.date === dateValue);
 
   const sortValue = sortSelect.value;
-  if (sortValue === "price")
-    filtered.sort((a, b) => a.price.base - b.price.base);
-  else if (sortValue === "duration")
-    filtered.sort((a, b) => a.durationMin - b.durationMin);
+  if (sortValue === "price") filtered.sort((a, b) => a.price.base - b.price.base);
+  else if (sortValue === "duration") filtered.sort((a, b) => a.durationMin - b.durationMin);
 
   currentPage = 1;
   displayTrips(filtered);
@@ -233,24 +191,18 @@ function setupPagination(tripsList) {
 // EVENTOS
 // -------------------------
 searchBtn.addEventListener("click", applyFilters);
-[fromInput, toInput, dateInput].forEach((input) => {
-  input.addEventListener("input", () => {
-    if (!input.value) applyFilters();
-  });
-});
+[fromInput, toInput, dateInput].forEach((input) => input.addEventListener("input", () => { if (!input.value) applyFilters(); }));
 sortSelect.addEventListener("change", applyFilters);
 
-// Modal de login
-closeModal.addEventListener("click", () => (loginModal.style.display = "none"));
-window.addEventListener("click", (e) => {
-  if (e.target === loginModal) loginModal.style.display = "none";
-});
-goLoginBtn.addEventListener(
-  "click",
-  () => (window.location.href = "login.html")
-);
+// Modal login
+if (closeModal) closeModal.addEventListener("click", () => (loginModal.style.display = "none"));
+if (window) window.addEventListener("click", (e) => { if (e.target === loginModal) loginModal.style.display = "none"; });
+if (goLoginBtn) goLoginBtn.addEventListener("click", () => (window.location.href = "login.html"));
 
 // -------------------------
 // INICIALIZAÇÃO
 // -------------------------
-fetchTripsAndProviders();
+document.addEventListener("DOMContentLoaded", () => {
+  fetchTripsAndProviders();
+  updateCartCount();
+});
