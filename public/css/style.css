@@ -35,7 +35,6 @@ body {
   padding: 0.8rem 2rem;
   background: #74ebd5;
   color: #fff;
-  border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   position: relative;
 }
@@ -84,7 +83,7 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-.logout-btn:hover,
+.logout-btn:hover
 .login-btn:hover {
   background: #f0f0f0;
   color: #3ca89e;
@@ -97,8 +96,8 @@ body {
   display: flex;
   gap: 2rem;
   width: 90%;
-  max-width: 1300px;
-  margin: 2rem auto;
+  max-width: 1600px;
+  margin: 5rem auto;
   align-items: flex-start;
 }
 

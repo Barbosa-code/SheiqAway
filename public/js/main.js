@@ -22,7 +22,7 @@ const goLoginBtn = document.getElementById("goLogin");
 // -------------------------
 let trips = [];
 let currentPage = 1;
-const tripsPerPage = 6;
+const tripsPerPage = 8;
 let showingPackages = false;
 
 let popupModal = document.getElementById("popup-modal");
