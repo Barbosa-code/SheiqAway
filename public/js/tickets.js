@@ -1,5 +1,5 @@
 // -------------------------
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO DE MODAIS
 // -------------------------
 function showConfirm(message) {
   return new Promise((resolve) => {
@@ -26,7 +26,6 @@ function showConfirm(message) {
       cleanUp();
       resolve(true);
     };
-
     const onNo = () => {
       cleanUp();
       resolve(false);
@@ -37,15 +36,80 @@ function showConfirm(message) {
   });
 }
 
+function showAlert(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("alert-modal");
+    const msgEl = document.getElementById("alert-message");
+    const okBtn = document.getElementById("alert-ok");
 
+    if (!modal || !msgEl || !okBtn) {
+      resolve();
+      return;
+    }
 
+    msgEl.textContent = message;
+    modal.classList.add("active");
+
+    const cleanUp = () => {
+      modal.classList.remove("active");
+      okBtn.removeEventListener("click", onOk);
+    };
+
+    const onOk = () => {
+      cleanUp();
+      resolve();
+    };
+
+    okBtn.addEventListener("click", onOk);
+  });
+}
+
+function showPrompt(message, defaultValue = "") {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("prompt-modal");
+    const msgEl = document.getElementById("prompt-message");
+    const inputEl = document.getElementById("prompt-input");
+    const okBtn = document.getElementById("prompt-ok");
+    const cancelBtn = document.getElementById("prompt-cancel");
+
+    if (!modal || !msgEl || !inputEl || !okBtn || !cancelBtn) {
+      resolve(null);
+      return;
+    }
+
+    msgEl.textContent = message;
+    inputEl.value = defaultValue;
+    modal.classList.add("active");
+
+    const cleanUp = () => {
+      modal.classList.remove("active");
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+    };
+
+    const onOk = () => {
+      cleanUp();
+      resolve(inputEl.value);
+    };
+    const onCancel = () => {
+      cleanUp();
+      resolve(null);
+    };
+
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+  });
+}
+
+// -------------------------
+// DOMContentLoaded
+// -------------------------
 document.addEventListener("DOMContentLoaded", () => {
   const ticketsContainer = document.getElementById("ticketsContainer");
   const userInfo = document.getElementById("userInfo");
   const logoutBtn = document.getElementById("logoutBtn");
   const loginBtnNav = document.getElementById("loginBtn");
 
-  // --------- Login/UI ----------
   const safeParse = (s) => { try { return JSON.parse(s || "null"); } catch { return null; } };
   let loggedUser = safeParse(localStorage.getItem("loggedUser")) || null;
   const userKey = (u) => u?.email || u?.username;
@@ -65,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loginBtnNav && (loginBtnNav.style.display = "inline-block");
     }
   }
+
   logoutBtn?.addEventListener("click", () => {
     localStorage.removeItem("loggedUser");
     loggedUser = null;
@@ -73,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   loginBtnNav?.addEventListener("click", () => (window.location.href = "login.html"));
 
-  // --------- Migração legado -> reservations ----------
+  // ------------------------- MIGRAÇÃO LEGADO
   function migrateLegacyToReservations() {
     const legacyTickets = safeParse(localStorage.getItem("tickets")) || [];
     const legacyUserTrips = safeParse(localStorage.getItem("userTrips")) || [];
@@ -86,10 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const uname = t.username || (loggedUser ? userKey(loggedUser) : null);
       if (!uname) return;
 
-      // se eram pacotes antigos (improvável neste fluxo), preserva meta mínima
       const isPackage = !!t.isPackage || (!!t.packageId && Array.isArray(t.trips));
-
       const orderId = "RSV-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+
       reservations.push({
         reservationId: orderId + "-" + id,
         orderId,
@@ -99,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
         packageName: t.packageName,
         description: t.description,
         trips: Array.isArray(t.trips) ? t.trips : undefined,
-
         from: t.from,
         to: t.to,
         date: t.date,
@@ -124,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --------- Reservas (CRUD) ----------
+  // ------------------------- CRUD RESERVAS
   const readAll = () => safeParse(localStorage.getItem("reservations")) || [];
   const writeAll = (arr) => localStorage.setItem("reservations", JSON.stringify(arr || []));
   const getUserReservations = () => {
@@ -133,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return readAll().filter(r => r.username === key || r.username === loggedUser.username);
   };
 
-  // --------- Validações de data ----------
   function isValidISODate(str) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
     const d = new Date(str + "T00:00:00Z");
@@ -148,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return d.getTime() < today.getTime();
   }
 
-  // --------- Cache de trips (para detalhar pacotes) ----------
   let __tripsCache = null;
   async function loadTripsCache() {
     if (__tripsCache) return __tripsCache;
@@ -162,14 +223,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return __tripsCache;
   }
+
   const priceOfTrip = (t) => (typeof t.price === "number" ? t.price : (t.price?.base ?? 0));
 
-  // --------- Render ----------
-  
+  // ------------------------- DISPLAY RESERVAS
   async function displayReservations() {
-    
     if (!ticketsContainer) return;
-
     const list = getUserReservations();
     ticketsContainer.innerHTML = "";
 
@@ -178,144 +237,124 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // carrega trips para mostrar detalhes em pacotes
     const trips = await loadTripsCache();
     const tripById = new Map(trips.map(t => [t.id, t]));
 
-    list.forEach(r => {
-  const card = document.createElement("div");
-  const isPackage = !!r.isPackage || (!!r.packageId && Array.isArray(r.trips));
-  const price = Number(r.price ?? 0);
-  const canceled = r.status === "canceled";
+    for (const r of list) {
+      const card = document.createElement("div");
+      const isPackage = !!r.isPackage || (!!r.packageId && Array.isArray(r.trips));
+      const price = Number(r.price ?? 0);
+      const canceled = r.status === "canceled";
+      card.className = `ticket-card ${isPackage ? "package" : ""}`.trim();
 
-  card.className = `ticket-card ${isPackage ? "package" : ""}`.trim();
+      if (isPackage) {
+        const tripsDetails = Array.isArray(r.trips) ? r.trips.map(id => tripById.get(id)).filter(Boolean) : [];
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="badge">Pacote</span>
+            <h3>${r.packageName || r.packageId || "Pacote"}</h3>
+          </div>
+          ${r.description ? `<p class="muted">${r.description}</p>` : ""}
+          <details class="pkg-details">
+            <summary>Ver viagens incluídas (${r.trips?.length || tripsDetails.length || 0})</summary>
+            <ul class="pkg-list">
+              ${
+                tripsDetails.length
+                  ? tripsDetails.map(t => `<li>${t.from} → ${t.to} • ${t.date}</li>`).join("")
+                  : "<li>(Sem detalhes)</li>"
+              }
+            </ul>
+          </details>
+          <p class="price-line"><strong>Preço do pacote:</strong> €${price.toFixed(2)}</p>
+          <p class="status-line">Estado: <strong>${r.status}</strong></p>
+          <div class="actions">
+            <button class="btn-change" data-id="${r.reservationId}" disabled title="Pacotes não permitem alterar a data">Alterar data</button>
+            <button class="btn-cancel" data-id="${r.reservationId}" ${canceled ? "disabled title='Já está cancelada'" : ""}>Cancelar</button>
+            <button class="btn-delete" data-id="${r.reservationId}" title="Apagar definitivamente">Apagar</button>
+          </div>
+        `;
+      } else {
+        card.innerHTML = `
+          <h3>${r.from ?? "-"} → ${r.to ?? "-"}</h3>
+          <p>Data: <span class="ticket-date">${r.date ?? "-"}</span></p>
+          <p>Hora: ${r.depart || ""}${r.arrive ? " - " + r.arrive : ""}</p>
+          <p>Modo: ${r.mode || "N/A"} | Estado: <strong>${r.status}</strong></p>
+          <p>Preço: €${price.toFixed(2)}</p>
+          <div class="actions">
+            <button class="btn-change" data-id="${r.reservationId}" ${canceled ? "disabled" : ""}>Alterar data</button>
+            <button class="btn-cancel" data-id="${r.reservationId}" ${canceled ? "disabled" : ""}>Cancelar</button>
+            <button class="btn-delete" data-id="${r.reservationId}">Apagar</button>
+          </div>
+        `;
+      }
+      ticketsContainer.appendChild(card);
+    }
 
-
-  if (isPackage) {
-    // ----- CARD DE PACOTE -----
-    const trips = tripById ? (Array.isArray(r.trips) ? r.trips.map(id => tripById.get(id)).filter(Boolean) : []) : [];
-    card.innerHTML = `
-      <div class="card-header">
-        <span class="badge">Pacote</span>
-        <h3>${r.packageName || r.packageId || "Pacote"}</h3>
-      </div>
-
-      ${r.description ? `<p class="muted">${r.description}</p>` : ""}
-
-      <details class="pkg-details">
-        <summary>Ver viagens incluídas (${r.trips?.length || trips.length || 0})</summary>
-        <ul class="pkg-list">
-          ${
-            trips.length
-              ? trips.map(t => `<li>${t.from} → ${t.to} • ${t.date}</li>`).join("")
-              : (Array.isArray(r.trips) ? r.trips.map(id => `<li>${id}</li>`).join("") : "<li>(Sem detalhes)</li>")
-          }
-        </ul>
-      </details>
-
-      <p class="price-line"><strong>Preço do pacote:</strong> €${price.toFixed(2)}</p>
-      <p class="status-line">Estado: <strong>${r.status}</strong></p>
-
-      <div class="actions">
-        <button class="btn-change" data-id="${r.reservationId}" disabled title="Pacotes não permitem alterar a data">Alterar data</button>
-        <button class="btn-cancel" data-id="${r.reservationId}" ${canceled ? "disabled title='Já está cancelada'" : ""}>Cancelar</button>
-        <button class="btn-delete" data-id="${r.reservationId}" title="Apagar definitivamente">Apagar</button>
-      </div>
-    `;
-  } else {
-    // ----- CARD NORMAL -----
-    card.innerHTML = `
-      <h3>${r.from ?? "-"} → ${r.to ?? "-"}</h3>
-      <p>Data: <span class="ticket-date">${r.date ?? "-"}</span></p>
-      <p>Hora: ${r.depart || ""}${r.arrive ? " - " + r.arrive : ""}</p>
-      <p>Modo: ${r.mode || "N/A"} | Estado: <strong>${r.status}</strong></p>
-      <p>Preço: €${price.toFixed(2)}</p>
-      <div class="actions">
-        <button class="btn-change" data-id="${r.reservationId}" ${canceled ? "disabled title='Reserva cancelada — não pode alterar a data'" : ""}>Alterar data</button>
-        <button class="btn-cancel" data-id="${r.reservationId}" ${canceled ? "disabled title='Já está cancelada'" : ""}>Cancelar</button>
-        <button class="btn-delete" data-id="${r.reservationId}" title="Apagar definitivamente">Apagar</button>
-      </div>
-    `;
-  }
-
-  ticketsContainer.appendChild(card);
-});
-
-
-    // Apagar definitivamente (serve para ambos os tipos)
+    // ------------------------- EVENTOS
+    // Apagar
     ticketsContainer.querySelectorAll(".btn-delete").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.id;
-        if (!confirm("Tens a certeza que queres apagar esta reserva? Esta ação é irreversível.")) return;
+      btn.addEventListener("click", async () => {
+        const confirmed = await showConfirm("Tens a certeza que queres apagar esta reserva? Esta ação é irreversível.");
+        if (!confirmed) return;
         const all = readAll();
-        const next = all.filter(x => x.reservationId !== id);
+        const next = all.filter(x => x.reservationId !== btn.dataset.id);
         writeAll(next);
         displayReservations();
       });
     });
 
-    // Cancelar (serve para ambos os tipos)
+    // Cancelar
     ticketsContainer.querySelectorAll(".btn-cancel").forEach(btn => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
         const all = readAll();
         const i = all.findIndex(x => x.reservationId === id);
-        if (i >= 0) {
-          if (all[i].status === "canceled") return; // já cancelada
-          all[i].status = "canceled";
-          (all[i].history ||= []).push({ at: new Date().toISOString(), action: "cancel" });
-          writeAll(all);
-          displayReservations();
-        }
+        if (i < 0 || all[i].status === "canceled") return;
+        all[i].status = "canceled";
+        (all[i].history ||= []).push({ at: new Date().toISOString(), action: "cancel" });
+        writeAll(all);
+        displayReservations();
       });
     });
 
-    // Alterar data (apenas reservas normais)
+    // Alterar data
     ticketsContainer.querySelectorAll(".btn-change:not([disabled])").forEach(btn => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
         const all = readAll();
         const i = all.findIndex(x => x.reservationId === id);
-        if (i < 0) return;
-
-        if (all[i].status === "canceled") {
-          alert("Não é possível alterar a data de uma reserva cancelada.");
+        if (i < 0 || all[i].status === "canceled") {
+          await showAlert("Não é possível alterar a data de uma reserva cancelada.");
           return;
         }
 
-        const newDate = prompt("Nova data (YYYY-MM-DD)?");
+        const newDate = await showPrompt("Nova data (YYYY-MM-DD)?", all[i].date);
         if (!newDate) return;
 
-        // Validações
         if (!isValidISODate(newDate)) {
-          alert("Data inválida. Usa o formato YYYY-MM-DD (ex.: 2025-11-20).");
+          await showAlert("Data inválida. Usa o formato YYYY-MM-DD (ex.: 2025-11-20).");
           return;
         }
         if (isPastDate(newDate)) {
-          alert("A nova data não pode ser no passado.");
+          await showAlert("A nova data não pode ser no passado.");
           return;
         }
         if (newDate === all[i].date) {
-          alert("A nova data é igual à atual.");
+          await showAlert("A nova data é igual à atual.");
           return;
         }
 
         const before = { date: all[i].date, depart: all[i].depart, arrive: all[i].arrive };
         all[i].date = newDate;
         all[i].status = "changed";
-        (all[i].history ||= []).push({
-          at: new Date().toISOString(),
-          action: "change",
-          from: before,
-          to: { date: newDate }
-        });
+        (all[i].history ||= []).push({ at: new Date().toISOString(), action: "change", from: before, to: { date: newDate } });
         writeAll(all);
         displayReservations();
       });
     });
   }
 
-  // --------- Start ----------
+  // ------------------------- START
   updateUserUI();
   migrateLegacyToReservations();
   displayReservations();

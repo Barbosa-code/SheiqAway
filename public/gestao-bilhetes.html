@@ -23,7 +23,37 @@
   <script src="js/navbar.js"></script>
   <script src="js/tickets.js"></script>
   
-  
+  <div id="confirm-modal" class="modal">
+  <div class="modal-content">
+    <p id="confirm-message">Mensagem de confirmação</p>
+    <div class="modal-actions">
+      <button id="confirm-yes" class="btn">Sim</button>
+      <button id="confirm-no" class="btn">Não</button>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Modal -->
+<div id="alert-modal" class="modal">
+  <div class="modal-content">
+    <p id="alert-message">Mensagem de alerta</p>
+    <div class="modal-actions">
+      <button id="alert-ok" class="btn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prompt Modal -->
+<div id="prompt-modal" class="modal">
+  <div class="modal-content">
+    <p id="prompt-message">Mensagem de prompt</p>
+    <input id="prompt-input" type="text" class="modal-input">
+    <div class="modal-actions">
+      <button id="prompt-ok" class="btn">OK</button>
+      <button id="prompt-cancel" class="btn">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
