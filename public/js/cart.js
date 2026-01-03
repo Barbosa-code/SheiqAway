@@ -1,6 +1,4 @@
-// cart.js (versão robusta para dados antigos)
-
-let popupModal = document.getElementById("popup-modal");
+﻿let popupModal = document.getElementById("popup-modal");
 if (!popupModal) {
   popupModal = document.createElement("div");
   popupModal.id = "popup-modal";
@@ -11,30 +9,29 @@ if (!popupModal) {
       <button id="popup-close">Fechar</button>
     </div>
   `;
-
-  
   document.body.appendChild(popupModal);
 }
 const popupMessage = document.getElementById("popup-message");
 const popupCloseBtn = document.getElementById("popup-close");
+const passengerModal = document.getElementById("passengerModal");
+const passengerList = document.getElementById("passengerList");
+const addPassengerBtn = document.getElementById("addPassengerBtn");
+const passengerCancelBtn = document.getElementById("passengerCancelBtn");
+const passengerConfirmBtn = document.getElementById("passengerConfirmBtn");
+const passengerTripInfo = document.getElementById("passengerTripInfo");
 
 function showPopup(message) {
   popupMessage.textContent = message;
   popupModal.classList.add("active");
-
-  // Fechar automaticamente após 3 segundos
 }
 
-// Fechar manualmente
 popupCloseBtn.addEventListener("click", () => {
   popupModal.classList.remove("active");
 });
 popupModal.querySelector(".popup-overlay").addEventListener("click", () => {
   popupModal.classList.remove("active");
 });
-// ==============================
-// Helpers gerais
-// ==============================
+
 function getLoggedUser() {
   try {
     return JSON.parse(localStorage.getItem("loggedUser")) || null;
@@ -42,433 +39,504 @@ function getLoggedUser() {
     return null;
   }
 }
-function getUserKey(u) {
-  return u?.email || u?.username;
-}
-function getAllCartTickets() {
+
+function getCartItems() {
   return JSON.parse(localStorage.getItem("cartTickets")) || [];
 }
-function setAllCartTickets(arr) {
-  localStorage.setItem("cartTickets", JSON.stringify(arr || []));
+
+function setCartItems(items) {
+  localStorage.setItem("cartTickets", JSON.stringify(items || []));
 }
+
 function getPriceNum(t) {
   return Number(typeof t.price === "number" ? t.price : t.price?.base ?? 0);
 }
 
-// Pontos — usa as do auth.js se existirem; senão fallbacks simples
-function getUserPoints(id) {
-  if (typeof window.getUserPoints === "function")
-    return window.getUserPoints(id);
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const u = users.find((x) => x.email === id || x.username === id);
-  return typeof u?.points === "number" ? u.points : 0;
-}
-function updateUserPoints(id, delta) {
-  if (typeof window.updateUserPoints === "function")
-    return window.updateUserPoints(id, delta);
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const i = users.findIndex((u) => u.email === id || u.username === id);
-  if (i < 0) return null;
-  if (typeof users[i].points !== "number") users[i].points = 0;
-  users[i].points = Math.max(0, users[i].points + Number(delta || 0));
-  localStorage.setItem("users", JSON.stringify(users));
-
-  const lu = getLoggedUser();
-  if (lu && (lu.email === id || lu.username === id)) {
-    lu.points = users[i].points;
-    localStorage.setItem("loggedUser", JSON.stringify(lu));
-  }
-  return users[i].points;
-}
-function redeemPoints(id, pointsToUse, rate = { pts: 100, eur: 5 }) {
-  if (typeof window.redeemPoints === "function")
-    return window.redeemPoints(id, pointsToUse, rate);
-  const current = getUserPoints(id);
-  const use = Math.min(current, Math.max(0, Math.floor(pointsToUse)));
-  const discount = (use / rate.pts) * rate.eur;
-  updateUserPoints(id, -use);
-  return { used: use, discount };
+function getItemQty(t) {
+  const qty = Number(t?.passengersCount ?? t?.qty ?? 1);
+  return Number.isFinite(qty) && qty > 0 ? Math.floor(qty) : 1;
 }
 
-// ==============================
-// Normalização de dados antigos
-// ==============================
-function ensureIdsAndMigrateUsernames() {
-  const user = getLoggedUser();
-  const key = getUserKey(user); // pode ser undefined se não logado
-  const all = getAllCartTickets();
-  let changed = false;
-
-  for (const t of all) {
-    // dar ID se faltar
-    if (t.id == null) {
-      t.id = Date.now() + Math.random();
-      changed = true;
-    }
-
-    // se não houver username no item e existe utilizador logado, associar ao atual (compat)
-    if ((t.username == null || t.username === "") && key) {
-      t.username = key;
-      changed = true;
-    }
-  }
-
-  if (changed) setAllCartTickets(all);
-  return all;
+function getItemTotal(t) {
+  const base = getPriceNum(t);
+  return base * getItemQty(t);
 }
 
-// ==============================
-// Carrinho por utilizador (compatível com dados antigos)
-// ==============================
-function getUserCartTickets() {
-  // Normaliza primeiro
-  const all = ensureIdsAndMigrateUsernames();
+let availablePoints = 0;
+let appliedPoints = 0;
 
-  const user = getLoggedUser();
-  const key = getUserKey(user);
-
-  if (!user) {
-    // sem login: mostrar TUDO (comportamento antigo)
-    return all;
-  }
-
-  // Com login: mostrar do utilizador + itens antigos sem username (compat)
-  return all.filter(
-    (t) =>
-      t.username === key ||
-      t.username === user?.username || // legacy
-      t.username == null // itens antigos sem username
-  );
-}
-
-function setUserCartTickets(items) {
-  const user = getLoggedUser();
-  const key = getUserKey(user);
-  const all = getAllCartTickets();
-
-  if (!user) {
-    // sem login: substitui tudo
-    setAllCartTickets(items);
-    return;
-  }
-
-  // mantém os de outros users; substitui os do user/sem username por estes
-  const others = all.filter(
-    (t) =>
-      !(
-        t.username == null ||
-        t.username === key ||
-        t.username === user.username
-      )
-  );
-  setAllCartTickets([
-    ...others,
-    ...items.map((it) => ({ ...it, username: it.username ?? key })),
-  ]);
-}
-
-function calcSubtotal(items) {
-  return items.reduce((s, t) => s + getPriceNum(t), 0);
-}
-
-// ==============================
-// Reservas
-// ==============================
-function createReservationsFromCart(username, cartItems) {
-  const reservations = JSON.parse(localStorage.getItem("reservations")) || [];
-  const orderId = "RSV-" + Date.now();
-
-  cartItems.forEach((t) => {
-    // 🔹 Pacote: grava como UM item de pacote
-    if (t.isPackage) {
-      reservations.push({
-        reservationId: orderId + "-" + (t.id ?? Date.now() + Math.random()),
-        orderId,
-        username,
-        isPackage: true,
-        packageId: t.packageId,
-        packageName: t.packageName,
-        description: t.description,
-        trips: Array.isArray(t.trips) ? t.trips.slice() : [], // IDs das trips do pacote
-        price: Number(t.price ?? 0), // preço TOTAL do pacote
-        status: "confirmed",
-        createdAt: new Date().toISOString(),
-        history: [],
-      });
-      return;
-    }
-
-    // 🔹 Viagem normal (como já tinhas)
-    reservations.push({
-      reservationId: orderId + "-" + (t.id ?? Date.now() + Math.random()),
-      orderId,
-      username,
-      from: t.from,
-      to: t.to,
-      date: t.date,
-      depart: t.depart,
-      arrive: t.arrive,
-      mode: t.mode,
-      price: Number(typeof t.price === "number" ? t.price : t.price?.base ?? 0),
-      status: "confirmed",
-      createdAt: new Date().toISOString(),
-      history: [],
+async function fetchUserPoints() {
+  try {
+    const res = await fetch("/SheiqAway/backend/api/pontos.php", {
+      cache: "no-store",
+      credentials: "include",
     });
-  });
-
-  localStorage.setItem("reservations", JSON.stringify(reservations));
-  return orderId;
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return Number(data.pontos || 0);
+  } catch {
+    return 0;
+  }
 }
 
-// ==============================
-// Estado de pontos (aplicados na UI)
-// ==============================
-let appliedPoints = 0; // pontos que o user quer usar agora (sem gastar até checkout)
-let lastDiscount = 0; // € calculado só para mostrar
-
-// ==============================
-// Render principal do carrinho
-// ==============================
 function renderCart() {
   const cartContainer = document.getElementById("cartContainer");
   const cartSummary = document.getElementById("cartSummary");
-  const totalPriceEl = document.getElementById("totalPrice"); // "Total: €x"
+  const totalPriceEl = document.getElementById("totalPrice");
   const userPointsEl = document.getElementById("userPoints");
   const discountValueEl = document.getElementById("discountValue");
   const totalToPayEl = document.getElementById("totalToPay");
   const checkoutBtn = document.getElementById("checkoutBtn");
 
-  const user = getLoggedUser();
-  const key = getUserKey(user);
-  const items = getUserCartTickets();
-  const subtotal = calcSubtotal(items);
-  const availablePts = user ? getUserPoints(key) : 0;
+  const items = getCartItems();
+  let needsSave = false;
+  items.forEach((t) => {
+    if (!t.passengersCount || t.passengersCount < 1) {
+      t.passengersCount = 1;
+      needsSave = true;
+    }
+  });
+  if (needsSave) setCartItems(items);
+  const subtotal = items.reduce((s, t) => s + getItemTotal(t), 0);
 
-  // Lista principal
   if (cartContainer) {
     cartContainer.innerHTML = "";
     if (items.length === 0) {
-      cartContainer.innerHTML = "<p>O carrinho está vazio.</p>";
+      cartContainer.innerHTML = "<p>O carrinho esta vazio.</p>";
     } else {
       items.forEach((t) => {
         const card = document.createElement("div");
         card.className = "ticket-card";
-
-        // Se for um pacote
         if (t.isPackage) {
+          const tripsList = Array.isArray(t.tripsDetails)
+            ? t.tripsDetails
+                .map(
+                  (trip) =>
+                    `<li>${trip.origem || "-"} -> ${trip.destino || "-"} | ${
+                      (trip.data_partida || "").slice(0, 10)
+                    }</li>`
+                )
+                .join("")
+            : "";
           card.innerHTML = `
-      <h3>🧳 Pacote: ${t.packageName}</h3>
-      <p>${t.description}</p>
-      <p>Inclui ${t.trips.length} viagens</p>
-      <p><strong>Preço total:</strong> €${t.price.toFixed(2)}</p>
-      <button class="deleteBtn" data-id="${t.id}">
-        <i class="fas fa-trash"></i> Remover Pacote
-      </button>
-    `;
+            <h3>Pacote: ${t.packageName || "Pacote"}</h3>
+            <p>${t.description || ""}</p>
+            ${
+              tripsList
+                ? `<details class="package-details"><summary>Ver viagens do pacote</summary><ul>${tripsList}</ul></details>`
+                : ""
+            }
+            <p><strong>Preco por passageiro:</strong> EUR ${getPriceNum(t).toFixed(2)}</p>
+            <label class="passenger-qty-label">Passageiros:</label>
+            <input class="passenger-qty-input" type="number" min="1" step="1" value="${getItemQty(t)}" />
+            <p class="price">Total pacote: EUR ${getItemTotal(t).toFixed(2)}</p>
+            <button class="deleteBtn" data-id="${t.id}">Remover</button>
+          `;
         } else {
-          // Bilhete individual (mantém como estava)
           const price = getPriceNum(t);
           card.innerHTML = `
-      <h3>${t.from} → ${t.to}</h3>
-      <p>Data: ${t.date} | ${t.depart || ""}${
-            t.arrive ? " – " + t.arrive : ""
-          }</p>
-      <p>Duração: ${t.durationMin} min | Stops: ${t.stops}</p>
-      <p>Preço: €${price.toFixed(2)}</p>
-      <p>Tipo: ${t.mode || "N/A"}</p>
-      <p>Empresa: ${t.provider || t.providerName || "Não especificado"}</p>
-      <button class="deleteBtn" data-id="${t.id}">
-        <i class="fas fa-trash"></i> Remover
-      </button>
-    `;
+            <h3>${t.from} -> ${t.to}</h3>
+            <p>Data: ${t.date} | ${t.depart || ""}${t.arrive ? " - " + t.arrive : ""}</p>
+            <p>Duracao: ${t.durationMin} min | Stops: ${t.stops}</p>
+            <p>Preco por passageiro: EUR ${price.toFixed(2)}</p>
+            <p>Tipo: ${t.mode || "N/A"}</p>
+            <p>Empresa: ${t.provider || t.providerName || "Nao especificado"}</p>
+            <label class="passenger-qty-label">Passageiros:</label>
+            <input class="passenger-qty-input" type="number" min="1" step="1" value="${getItemQty(t)}" />
+            <p class="price">Total viagem: EUR ${(price * getItemQty(t)).toFixed(2)}</p>
+            <button class="deleteBtn" data-id="${t.id}">Remover</button>
+          `;
         }
-
         card.querySelector(".deleteBtn").addEventListener("click", (e) => {
           const id = e.currentTarget.dataset.id;
-          removeTicketById(id);
+          const next = getCartItems().filter((x) => String(x.id) !== String(id));
+          setCartItems(next);
+          renderCart();
         });
+        const qtyInput = card.querySelector(".passenger-qty-input");
+        if (qtyInput) {
+          qtyInput.addEventListener("change", (e) => {
+            const nextQty = Math.max(1, Math.floor(Number(e.target.value || 1)));
+            e.target.value = String(nextQty);
+            const next = getCartItems().map((x) =>
+              String(x.id) === String(t.id)
+                ? { ...x, passengersCount: nextQty }
+                : x
+            );
+            setCartItems(next);
+            renderCart();
+          });
+        }
         cartContainer.appendChild(card);
       });
     }
   }
 
-  // Resumo lateral
   if (cartSummary) {
     cartSummary.innerHTML = "";
     items.forEach((t) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span>${t.from} → ${t.to}</span><span>€${getPriceNum(
+      const qty = getItemQty(t);
+      const label = t.from || t.packageName || "Item";
+      li.innerHTML = `<span>${label} x${qty}</span><span>EUR ${getItemTotal(
         t
       ).toFixed(2)}</span>`;
       cartSummary.appendChild(li);
     });
   }
 
-  // Totais / Pontos
-  const rate = { pts: 100, eur: 5 }; // 100 pts = 5€
-  const usable = Math.min(appliedPoints, availablePts); // não deixa usar mais que tens
+  const rate = { pts: 100, eur: 5 };
+  const usable = Math.min(appliedPoints, availablePoints);
   const discount = (usable / rate.pts) * rate.eur;
-  lastDiscount = discount;
 
-  if (totalPriceEl) totalPriceEl.textContent = `Total: €${subtotal.toFixed(2)}`;
-  if (userPointsEl) userPointsEl.textContent = availablePts;
+  if (totalPriceEl) totalPriceEl.textContent = `Total: EUR ${subtotal.toFixed(2)}`;
+  if (userPointsEl) userPointsEl.textContent = String(availablePoints);
   if (discountValueEl) discountValueEl.textContent = discount.toFixed(2);
   if (totalToPayEl)
-    totalToPayEl.textContent = Math.max(0, subtotal - discount).toFixed(2);
+    totalToPayEl.textContent = `EUR ${Math.max(0, subtotal - discount).toFixed(2)}`;
 
   if (checkoutBtn) checkoutBtn.style.display = items.length ? "block" : "none";
+}
 
-  // Badge da navbar (se existir)
-  const badge = document.getElementById("cartBadge");
-  if (badge) {
-    badge.hidden = items.length === 0;
-    if (!badge.hidden) badge.textContent = items.length;
+function validDate(str) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(str);
+}
+
+function createPassengerRow(data = {}, canRemove = true) {
+  const row = document.createElement("div");
+  row.className = "passenger-row";
+  row.dataset.fixed = canRemove ? "0" : "1";
+  const nome = String(data.nome || "");
+  const dataNasc = String(data.data_nascimento || "");
+  const email = String(data.email || "");
+
+  row.innerHTML = `
+    <button type="button" class="remove-passenger" ${
+      canRemove ? "" : "disabled"
+    }>Remover</button>
+    <div class="field">
+      <label>Nome completo</label>
+      <input type="text" data-field="nome" value="${nome}" />
+    </div>
+    <div class="field">
+      <label>Data de nascimento</label>
+      <input type="date" data-field="data_nascimento" value="${dataNasc}" />
+    </div>
+    <div class="field full">
+      <label>Email</label>
+      <input type="email" data-field="email" value="${email}" />
+    </div>
+  `;
+
+  row.querySelector(".remove-passenger").addEventListener("click", () => {
+    if (!canRemove) return;
+    row.remove();
+    updateRemoveButtons();
+  });
+
+  return row;
+}
+
+function updateRemoveButtons() {
+  if (!passengerList) return;
+  const buttons = passengerList.querySelectorAll(".remove-passenger");
+  const disable = buttons.length <= 1;
+  buttons.forEach((btn) => {
+    const fixed = btn.closest(".passenger-row")?.dataset.fixed === "1";
+    btn.disabled = disable || fixed;
+  });
+}
+
+function resetPassengerModal(defaultEmail, count, tripLabel) {
+  if (!passengerList) return;
+  passengerList.innerHTML = "";
+  const qty = Math.max(1, Math.floor(Number(count || 1)));
+  for (let i = 0; i < qty; i++) {
+    passengerList.appendChild(
+      createPassengerRow({ email: defaultEmail || "" }, false)
+    );
+  }
+  updateRemoveButtons();
+  if (passengerTripInfo) {
+    passengerTripInfo.textContent = tripLabel || "";
+  }
+  if (addPassengerBtn) {
+    addPassengerBtn.classList.add("is-hidden");
   }
 }
 
-function removeTicketById(id) {
-  const all = getAllCartTickets();
-  const next = all.filter((t) => String(t.id) !== String(id));
-  setAllCartTickets(next);
-  enforceBundlePricingForUser();
-  renderCart();
+function readPassengers(requiredCount) {
+  if (!passengerList) {
+    return { ok: false, error: "Modal de passageiros indisponivel." };
+  }
+  const rows = passengerList.querySelectorAll(".passenger-row");
+  if (!rows.length) {
+    return { ok: false, error: "Adiciona pelo menos um passageiro." };
+  }
+
+  const passengers = [];
+  for (const row of rows) {
+    const nome = row.querySelector('[data-field="nome"]')?.value.trim() || "";
+    const dataNasc =
+      row.querySelector('[data-field="data_nascimento"]')?.value.trim() || "";
+    const email = row.querySelector('[data-field="email"]')?.value.trim() || "";
+
+    if (!nome || !dataNasc || !validDate(dataNasc) || !email) {
+      return {
+        ok: false,
+        error: "Preenche todos os campos com uma data valida.",
+      };
+    }
+
+    passengers.push({
+      nome,
+      data_nascimento: dataNasc,
+      email,
+    });
+  }
+
+  if (requiredCount && passengers.length !== requiredCount) {
+    return {
+      ok: false,
+      error: `Numero de passageiros invalido. Esperado: ${requiredCount}.`,
+    };
+  }
+
+  return { ok: true, data: passengers };
 }
 
-// ==============================
-// Eventos de Pontos + Checkout
-// ==============================
-function wireLoyaltyAndCheckout() {
+function collectPassengers(loggedUser, count, tripLabel) {
+  return new Promise((resolve) => {
+    if (
+      !passengerModal ||
+      !passengerList ||
+      !addPassengerBtn ||
+      !passengerCancelBtn ||
+      !passengerConfirmBtn
+    ) {
+      resolve(null);
+      return;
+    }
+
+    const qty = Math.max(1, Math.floor(Number(count || 1)));
+    resetPassengerModal(loggedUser?.email || "", qty, tripLabel);
+    passengerModal.style.display = "block";
+
+    const onAdd = () => {
+      passengerList.appendChild(createPassengerRow({}));
+      updateRemoveButtons();
+    };
+    const onCancel = () => {
+      cleanup();
+      resolve(null);
+    };
+    const onConfirm = () => {
+      const result = readPassengers(qty);
+      if (!result.ok) {
+        alert(result.error);
+        return;
+      }
+      cleanup();
+      resolve(result.data);
+    };
+    const onOverlay = (e) => {
+      if (e.target === passengerModal) {
+        onCancel();
+      }
+    };
+    const cleanup = () => {
+      passengerModal.style.display = "none";
+      addPassengerBtn.removeEventListener("click", onAdd);
+      passengerCancelBtn.removeEventListener("click", onCancel);
+      passengerConfirmBtn.removeEventListener("click", onConfirm);
+      passengerModal.removeEventListener("click", onOverlay);
+      addPassengerBtn.classList.remove("is-hidden");
+    };
+
+    addPassengerBtn.addEventListener("click", onAdd);
+    passengerCancelBtn.addEventListener("click", onCancel);
+    passengerConfirmBtn.addEventListener("click", onConfirm);
+    passengerModal.addEventListener("click", onOverlay);
+  });
+}
+
+async function checkout() {
+  const user = getLoggedUser();
+  if (!user) {
+    alert("Inicia sessao.");
+    return;
+  }
+
+  const items = getCartItems();
+  if (!items.length) {
+    alert("Carrinho vazio.");
+    return;
+  }
+
+  const rate = { pts: 100, eur: 5 };
+  const usable = Math.min(appliedPoints, availablePoints);
+  const discount = (usable / rate.pts) * rate.eur;
+
+  let remainingDiscount = discount;
+  let remainingPoints = usable;
+
+  const createReserva = async (payload) => {
+    const res = await fetch("/SheiqAway/backend/api/reservas.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Erro ao criar a reserva.");
+    }
+    return data;
+  };
+
+  for (const item of items) {
+    const itemPrice = getItemTotal(item);
+    const qty = getItemQty(item);
+    const tripLabel = item.isPackage
+      ? `Pacote ${item.packageName || "Pacote"} | Passageiros: ${qty}`
+      : `${item.from || "-"} -> ${item.to || "-"} | Passageiros: ${qty}`;
+    const passengers = await collectPassengers(user, qty, tripLabel);
+    if (!passengers || passengers.length !== qty) {
+      alert("Dados do passageiro invalidos.");
+      return;
+    }
+    const applyDiscount =
+      remainingDiscount > 0 ? Math.min(itemPrice, remainingDiscount) : 0;
+    const totalPago = Math.max(0, itemPrice - applyDiscount);
+    const pontosUsados =
+      remainingPoints > 0
+        ? Math.min(
+            remainingPoints,
+            Math.ceil((applyDiscount / rate.eur) * rate.pts)
+          )
+        : 0;
+
+    if (item.isPackage) {
+      const tripsDetails = Array.isArray(item.tripsDetails)
+        ? item.tripsDetails
+        : [];
+      if (!tripsDetails.length) {
+        alert("Pacote sem detalhes. Remove e adiciona novamente.");
+        return;
+      }
+      const count = tripsDetails.length;
+      const perTripTotal = itemPrice / count;
+      const perTripDiscount = applyDiscount / count;
+      let remainingItemPoints = pontosUsados;
+
+      for (let i = 0; i < tripsDetails.length; i += 1) {
+        const t = tripsDetails[i];
+        const isLast = i === tripsDetails.length - 1;
+        const tripTotal = isLast
+          ? itemPrice - perTripTotal * (count - 1)
+          : perTripTotal;
+        const tripDiscount = isLast
+          ? applyDiscount - perTripDiscount * (count - 1)
+          : perTripDiscount;
+        const tripPoints = isLast
+          ? remainingItemPoints
+          : Math.floor(pontosUsados / count);
+        remainingItemPoints = Math.max(0, remainingItemPoints - tripPoints);
+
+        const payload = {
+          viagemId: t.id,
+          origem: t.origem || "",
+          destino: t.destino || "",
+          data_partida: t.data_partida || "",
+          preco_total: tripTotal,
+          companhia: t.companhia || "",
+          passageiros: passengers,
+          pontos_usados: tripPoints,
+          total_pago: Math.max(0, tripTotal - tripDiscount),
+        };
+
+        try {
+          await createReserva(payload);
+        } catch (err) {
+          alert(err instanceof Error ? err.message : "Erro ao criar a reserva.");
+          return;
+        }
+      }
+    } else {
+      if (!item.apiViagemId) {
+        alert("Viagem invalida no carrinho.");
+        return;
+      }
+      const payload = {
+        viagemId: item.apiViagemId,
+        origem: item.origem || item.from,
+        destino: item.destino || item.to,
+        data_partida: item.data_partida || item.date,
+        preco_total: itemPrice,
+        companhia: item.companhia || item.provider,
+        passageiros: passengers,
+        pontos_usados: pontosUsados,
+        total_pago: totalPago,
+      };
+
+      try {
+        await createReserva(payload);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Erro ao criar a reserva.");
+        return;
+      }
+    }
+
+    remainingDiscount = Math.max(0, remainingDiscount - applyDiscount);
+    remainingPoints = Math.max(0, remainingPoints - pontosUsados);
+  }
+
+  setCartItems([]);
+  appliedPoints = 0;
+  availablePoints = await fetchUserPoints();
+  renderCart();
+  showPopup("Reserva criada com sucesso.");
+}
+
+function wireEvents() {
   const applyBtn = document.getElementById("applyPoints");
   const pointsInp = document.getElementById("usePoints");
   const checkoutBtn = document.getElementById("checkoutBtn");
 
-  // aplicar pontos (não gasta ainda)
   applyBtn?.addEventListener("click", () => {
-    const user = getLoggedUser();
-    if (!user) return alert("Inicia sessão.");
-    const key = getUserKey(user);
-    const available = getUserPoints(key);
     const req = Math.max(0, Math.floor(Number(pointsInp?.value || 0)));
-
-    if (req > available) {
-      alert(`Tens apenas ${available} pontos.`);
-      appliedPoints = available;
-      if (pointsInp) pointsInp.value = available;
-    } else {
-      appliedPoints = req;
-    }
-    enforceBundlePricingForUser();
+    appliedPoints = Math.min(req, availablePoints);
+    if (pointsInp) pointsInp.value = String(appliedPoints);
     renderCart();
   });
 
-  // finalizar compra
   checkoutBtn?.addEventListener("click", () => {
-    const user = getLoggedUser();
-    if (!user) return alert("Inicia sessão.");
-    const key = getUserKey(user);
-
-    const all = getAllCartTickets();
-    const items = getUserCartTickets(); // já traz do user + legacy
-    if (items.length === 0) return alert("Carrinho vazio.");
-
-    const subtotal = calcSubtotal(items);
-
-    // gasta pontos agora
-    const { used, discount } = redeemPoints(key, appliedPoints, {
-      pts: 100,
-      eur: 5,
-    });
-    const toPay = Math.max(0, subtotal - discount);
-
-    // credita pontos pelo valor pago (1 pt por €)
-    const earned = Math.floor(toPay);
-    updateUserPoints(key, earned);
-
-    // criar reservas
-    const orderId = createReservationsFromCart(key, items);
-
-    // limpar itens (remove todos os que foram mostrados ao user)
-    const shownIds = new Set(items.map((t) => String(t.id)));
-    const others = all.filter((t) => !shownIds.has(String(t.id)));
-    setAllCartTickets(others);
-
-    appliedPoints = 0;
-    enforceBundlePricingForUser();
-    renderCart();
-
-    showPopup(`Reserva ${orderId} criada.\nPontos usados: ${used}  \nDesconto: €${discount.toFixed(2)}\nPago: €${toPay.toFixed(2)}\nPontos ganhos: ${earned}`);
+    checkout();
   });
 }
 
-// Reaplica/retira descontos de pacotes conforme conjunto completo esteja presente
-function enforceBundlePricingForUser() {
-  const user = getLoggedUser();
-  if (!user) return;
-
-  const key = user.email || user.username;
-  const all = JSON.parse(localStorage.getItem("cartTickets")) || [];
-
-  const mine = all.filter((i) => i.username === key);
-  const others = all.filter((i) => i.username !== key);
-
-  // agrupar por packageId
-  const groups = new Map();
-  for (const item of mine) {
-    if (!item.packageId || !Array.isArray(item.packageTripIds) || !item.tripId)
-      continue;
-    if (!groups.has(item.packageId)) {
-      groups.set(item.packageId, {
-        items: [],
-        expected: new Set(item.packageTripIds),
-      });
-    }
-    groups.get(item.packageId).items.push(item);
-  }
-
-  let changed = false;
-
-  for (const [pkgId, group] of groups.entries()) {
-    const presentTripIds = new Set(group.items.map((i) => i.tripId));
-    // válido se TODAS as expected estão presentes
-    const valid = [...group.expected].every((id) => presentTripIds.has(id));
-
-    for (const item of group.items) {
-      const original = Number(item.originalPrice ?? item.price ?? 0);
-      if (!valid) {
-        // pacote incompleto -> remove desconto
-        if (
-          typeof item.originalPrice === "number" &&
-          item.price !== item.originalPrice
-        ) {
-          item.price = Number(item.originalPrice);
-          changed = true;
-        }
-        // remove marcações de pacote (opcional mas recomendado)
-        delete item.packageId;
-        delete item.packageTripIds;
-        delete item.packageName;
-      } else {
-        // pacote completo -> certifica preço com desconto (deixa como está)
-        // (se quiseres recomputar, precisas gravar também 'bundleShare' no add)
-      }
-    }
-  }
-
-  if (changed) {
-    localStorage.setItem("cartTickets", JSON.stringify([...others, ...mine]));
-  }
-}
-
-// ==============================
-// Boot
-// ==============================
-document.addEventListener("DOMContentLoaded", () => {
-  enforceBundlePricingForUser();
+document.addEventListener("DOMContentLoaded", async () => {
+  availablePoints = await fetchUserPoints();
   renderCart();
-  wireLoyaltyAndCheckout();
+  wireEvents();
 });
-window.addEventListener("storage", (e) => {
-  if (["cartTickets", "loggedUser", "users"].includes(e.key))
-    enforceBundlePricingForUser();
-  renderCart();
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

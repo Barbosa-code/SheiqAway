@@ -247,6 +247,13 @@ body {
   color: #555;
 }
 
+.price-original {
+  text-decoration: line-through;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-left: 0.35rem;
+}
+
 .trip-card button {
   width: 100%;
   padding: 0.6rem;
@@ -270,8 +277,9 @@ body {
   margin-top: 1.5rem;
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .pagination button {
@@ -292,6 +300,16 @@ body {
   background: #74ebd5;
   color: #fff;
   font-weight: 600;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-indicator {
+  font-weight: 600;
+  color: #111827;
 }
 
 /* -------------------------

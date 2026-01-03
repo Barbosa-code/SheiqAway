@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheiqAway - Pacotes</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="wrapper admin-page">
+    <div id="navbar-container"></div>
+
+    <main class="container">
+      <section class="admin-section">
+        <h3>Pacotes</h3>
+        <form id="pacoteForm" class="admin-form">
+          <input type="text" id="pacoteNome" placeholder="Nome" required />
+          <input type="text" id="pacoteDescricao" placeholder="Descricao" />
+          <input type="number" id="pacotePreco" placeholder="Preco total" step="0.01" required />
+          <input type="text" id="pacoteViagens" placeholder="Viagens (IDs separados por virgula)" required />
+          <select id="pacoteAtiva">
+            <option value="1" selected>Ativo</option>
+            <option value="0">Inativo</option>
+          </select>
+          <button type="submit">Criar</button>
+        </form>
+        <div class="admin-subsection">
+          <h4>Viagens (adicionar ao pacote)</h4>
+          <form id="pacoteSearchForm" class="admin-form admin-form-compact">
+            <input type="text" id="pacoteOrigem" placeholder="Origem (OPO)" />
+            <input type="text" id="pacoteDestino" placeholder="Destino (LON)" />
+            <input type="date" id="pacoteData" />
+            <input type="text" id="pacoteQuery" placeholder="Pesquisa rapida (origem, destino, companhia)" />
+            <button type="submit">Pesquisar</button>
+          </form>
+          <div class="admin-table-wrap">
+            <table id="pacoteViagensTable" class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Origem</th>
+                  <th>Destino</th>
+                  <th>Data</th>
+                  <th>Preco</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="admin-pagination">
+              <button id="pacoteViagensPrev" type="button">Anterior</button>
+              <span id="pacoteViagensPageInfo">Pagina 1</span>
+              <button id="pacoteViagensNext" type="button">Seguinte</button>
+            </div>
+          </div>
+        </div>
+        <table id="pacotesTable" class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Viagens</th>
+              <th>Preco</th>
+              <th>Estado</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/navbar.js" defer></script>
+  <script src="js/admin-common.js" defer></script>
+  <script src="js/admin-pacotes.js" defer></script>
+</body>
+</html>

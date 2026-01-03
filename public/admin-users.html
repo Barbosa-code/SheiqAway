@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheiqAway - Utilizadores</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="wrapper admin-page">
+    <div id="navbar-container"></div>
+
+    <main class="container">
+      <section class="admin-section">
+        <div class="section-header">
+          <h3>Utilizadores</h3>
+          <p>Clica num utilizador para ver historico e reservas.</p>
+        </div>
+        <div class="user-toolbar">
+          <input type="text" id="userSearch" placeholder="Pesquisar por nome ou email" />
+          <div id="usersPagination" class="admin-pagination"></div>
+        </div>
+        <form id="userForm" class="admin-form">
+          <input type="text" id="userNome" placeholder="Nome" required />
+          <input type="email" id="userEmail" placeholder="Email" required />
+          <input type="password" id="userPassword" placeholder="Password" required />
+          <select id="userTipo">
+            <option value="user">Utilizador</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit">Criar</button>
+        </form>
+        <div id="usersList" class="user-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/navbar.js" defer></script>
+  <script src="js/admin-common.js" defer></script>
+  <script src="js/admin-users.js" defer></script>
+</body>
+</html>

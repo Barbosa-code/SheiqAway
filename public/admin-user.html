@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheiqAway - Utilizador</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="wrapper admin-page">
+    <div id="navbar-container"></div>
+
+    <main class="container">
+      <div class="admin-user-header">
+        <div>
+          <h2 id="userName">Utilizador</h2>
+          <p id="userEmail"></p>
+        </div>
+        <button id="backBtn" class="back-btn">Voltar</button>
+      </div>
+
+      <div id="userMeta" class="admin-user-meta"></div>
+
+      <section class="admin-section">
+        <h3>Reservas</h3>
+        <div id="userReservations" class="reservation-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/navbar.js" defer></script>
+  <script src="js/admin-user.js" defer></script>
+</body>
+</html>

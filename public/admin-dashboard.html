@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheiqAway - Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="wrapper admin-page">
+    <div id="navbar-container"></div>
+
+    <main class="container">
+      <header class="admin-hero">
+        <div>
+          <h2>Dashboard</h2>
+          <p>Visao geral de reservas, utilizadores e desempenho.</p>
+        </div>
+        <div class="admin-hero-meta">
+          <div class="meta-card">
+            <span>Reservas hoje</span>
+            <strong id="statToday">-</strong>
+          </div>
+          <div class="meta-card">
+            <span>Total reservas</span>
+            <strong id="statTotal">-</strong>
+          </div>
+          <div class="meta-card">
+            <span>Total utilizadores</span>
+            <strong id="statUsers">-</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="admin-section">
+        <h3>Estatisticas</h3>
+        <div id="kpiGrid" class="kpi-grid"></div>
+        <div id="statsContainer" class="stats-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/navbar.js" defer></script>
+  <script src="js/admin-common.js" defer></script>
+  <script src="js/admin-dashboard.js" defer></script>
+</body>
+</html>

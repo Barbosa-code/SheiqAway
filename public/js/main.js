@@ -1,4 +1,4 @@
-// -------------------------
+﻿// -------------------------
 // ELEMENTOS DO DOM
 // -------------------------
 const tripsContainer = document.getElementById("tripsContainer");
@@ -63,6 +63,49 @@ popupModal.querySelector(".popup-overlay").addEventListener("click", () => {
 const getPrice = (t) =>
   typeof t.price === "number" ? t.price : t.price?.base ?? 0;
 
+function extractDate(value) {
+  if (!value) return "";
+  const str = String(value);
+  const match = str.match(/\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : "";
+}
+
+function extractTime(value) {
+  if (!value) return "";
+  const str = String(value);
+  const match = str.match(/\b\d{2}:\d{2}/);
+  return match ? match[0] : "";
+}
+
+function formatDatePart(value) {
+  if (!value) return "";
+  const str = String(value);
+  if (/\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const dt = new Date(str);
+    if (!Number.isNaN(dt.getTime())) {
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, "0");
+      const d = String(dt.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+  }
+  return extractDate(str);
+}
+
+function formatTimePart(value) {
+  if (!value) return "";
+  const str = String(value);
+  if (/\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const dt = new Date(str);
+    if (!Number.isNaN(dt.getTime())) {
+      const h = String(dt.getHours()).padStart(2, "0");
+      const m = String(dt.getMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+  }
+  return extractTime(str);
+}
+
 function updateCartCount() {
   const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
   const cartCount = document.getElementById("cartCount");
@@ -70,38 +113,116 @@ function updateCartCount() {
 }
 
 // -------------------------
-// FETCH VIAGENS + PROVIDERS
+// FETCH VIAGENS (API)
 // -------------------------
+function normalizeTrip(raw) {
+  const from = raw.origem || raw.from || raw.origin || "";
+  const to = raw.destino || raw.to || raw.destination || "";
+  const departRaw =
+    raw.data_partida ||
+    raw.dataPartida ||
+    raw.depart ||
+    raw.hora_partida ||
+    raw.horaPartida ||
+    "";
+  const arriveRaw =
+    raw.data_chegada ||
+    raw.dataChegada ||
+    raw.arrive ||
+    raw.hora_chegada ||
+    raw.horaChegada ||
+    "";
+  const date = raw.data || raw.date || formatDatePart(departRaw) || "";
+  const depart =
+    formatTimePart(departRaw) ||
+    raw.hora_partida ||
+    raw.horaPartida ||
+    raw.depart ||
+    "";
+  const arrive =
+    formatTimePart(arriveRaw) ||
+    raw.hora_chegada ||
+    raw.horaChegada ||
+    raw.arrive ||
+    "";
+  const durationMin =
+    raw.duracao_min ?? raw.duracao ?? raw.durationMin ?? raw.duration ?? "";
+  const hasEscala = raw.escala === true || raw.escala === 1;
+  const stops =
+    typeof raw.escalas === "number"
+      ? raw.escalas
+      : Array.isArray(raw.escalas)
+      ? raw.escalas.length
+      : raw.stops ?? (hasEscala ? 1 : 0);
+  let price = raw.preco_final ?? raw.preco ?? raw.price ?? raw.preco_total ?? 0;
+  if (raw.preco !== undefined || raw.moeda || raw.preco_final !== undefined) {
+    const baseValue =
+      raw.preco_final ??
+      raw.preco ??
+      (typeof price === "number" ? price : price?.base) ??
+      0;
+    price = {
+      base: Number(baseValue) || 0,
+      original: raw.preco_original ?? null,
+      currency: raw.moeda || raw.currency || "EUR",
+    };
+  }
+  const providerName =
+    raw.companhia ||
+    raw.company ||
+    raw.companyName ||
+    raw.providerName ||
+    raw.sigla ||
+    "Nao especificado";
+  const mode = raw.modo || raw.mode || (raw.tipo ? "plane" : "");
+  const tripType = raw.tipo || raw.tripType || "";
+  const escalaInfo = raw.escala_info || raw.escalaInfo || null;
+
+  return {
+    id: raw.id ?? raw.viagemId ?? raw.codigo ?? raw.tripId ?? 0,
+    from,
+    to,
+    date,
+    depart,
+    arrive,
+    durationMin,
+    stops,
+    price,
+    mode,
+    tripType,
+    providerName,
+    dataPartida: raw.data_partida || raw.dataPartida || "",
+    dataChegada: raw.data_chegada || raw.dataChegada || "",
+    stopInfo: escalaInfo
+      ? {
+          city: escalaInfo.cidade || escalaInfo.city || "",
+          durationMin: escalaInfo.duracao_min ?? escalaInfo.durationMin ?? "",
+        }
+      : null,
+  };
+}
+
 async function fetchTripsAndProviders() {
   try {
-    const tripsRes = await fetch("data/trips.json", { cache: "no-store" });
-    if (!tripsRes.ok) throw new Error(`trips.json: HTTP ${tripsRes.status}`);
-    const tripsData = await tripsRes.json();
-
-    const providersRes = await fetch("data/providers.json", {
+    const res = await fetch("/SheiqAway/backend/api/viagens.php", {
       cache: "no-store",
+      credentials: "include",
     });
-    if (!providersRes.ok)
-      throw new Error(`providers.json: HTTP ${providersRes.status}`);
-    const providersData = await providersRes.json();
+    if (!res.ok) throw new Error(`API: HTTP ${res.status}`);
+    const payload = await res.json();
+    if (!payload.ok || !Array.isArray(payload.data)) {
+      throw new Error("Resposta inesperada da API.");
+    }
 
-    // mapear por providerId (não 'provider')
-    trips = tripsData.map((trip) => {
-      const provider = providersData.find((p) => p.id === trip.providerId);
-      return {
-        ...trip,
-        providerName: provider ? provider.name : "Não especificado",
-        providerLogo: provider ? provider.logo : null,
-      };
-    });
+    trips = payload.data.map(normalizeTrip);
 
     currentPage = 1;
     displayTrips(trips);
     setupPagination(trips);
   } catch (error) {
-    console.error("Erro ao carregar viagens/providers:", error);
+    console.error("Erro ao carregar viagens:", error);
     if (tripsContainer)
-      tripsContainer.innerHTML = `<p>Não foi possível carregar as viagens.<br><small>${String(
+      tripsContainer.innerHTML = `<p>Nao foi possivel carregar as viagens.<br><small>${String(
         error.message || error
       )}</small></p>`;
   }
@@ -115,16 +236,25 @@ function createTripCard(trip) {
   card.className = "trip-card";
 
   const basePrice = getPrice(trip);
+  const originalPrice =
+    typeof trip.price === "object" ? trip.price.original : null;
+  const tipoLabel = trip.tripType || trip.mode || "N/A";
+  const escalaLabel = trip.stopInfo
+    ? `Escala: ${trip.stopInfo.city || "N/A"}${
+        trip.stopInfo.durationMin ? ` (${trip.stopInfo.durationMin} min)` : ""
+      }`
+    : "";
 
   card.innerHTML = `
-    <h3>${trip.from} → ${trip.to}</h3>
+    <h3>${trip.from} -> ${trip.to}</h3>
     <p>Data: ${trip.date} | Hora: ${trip.depart ?? ""} - ${
     trip.arrive ?? ""
   }</p>
-    <p>Duração: ${trip.durationMin} min | Stops: ${trip.stops}</p>
-    <p>Preço: €${basePrice.toFixed(2)}</p>
-    <p>Tipo: ${trip.mode || "N/A"}</p>
+    <p>Duracao: ${trip.durationMin} min | Stops: ${trip.stops}</p>
+    <p>Preco: EUR ${basePrice.toFixed(2)}${originalPrice && Number(originalPrice) > basePrice ? ` <span class="price-original">EUR ${Number(originalPrice).toFixed(2)}</span>` : ""}</p>
+    <p>Tipo: ${tipoLabel}</p>
     <p>Empresa: ${trip.providerName}</p>
+    ${escalaLabel ? `<p>${escalaLabel}</p>` : ""}
     
     <button class="buyBtn">Adicionar ao Carrinho</button>
   `;
@@ -144,6 +274,7 @@ function createTripCard(trip) {
     const ticket = {
       id: Date.now() + Math.random(),
       username: usernameKey,
+      apiViagemId: trip.id,
       from: trip.from,
       to: trip.to,
       date: trip.date,
@@ -152,8 +283,13 @@ function createTripCard(trip) {
       durationMin: trip.durationMin,
       stops: trip.stops,
       price: basePrice,
-      mode: trip.mode || "",
+      mode: trip.tripType || trip.mode || "",
       provider: trip.providerName || "Não especificado",
+      origem: trip.from,
+      destino: trip.to,
+      data_partida: trip.dataPartida || trip.date,
+      companhia: trip.providerName || "",
+      passengersCount: 1,
     };
 
     cartTickets.push(ticket);
@@ -189,6 +325,7 @@ function displayTrips(tripsList) {
 // -------------------------
 // FILTROS E ORDENAÇÃO
 // -------------------------
+
 function applyFilters() {
   if (showingPackages) return; // filtros desativados em modo Pacotes
 
@@ -253,17 +390,31 @@ function setupPagination(tripsList) {
   const totalPages = Math.ceil(tripsList.length / tripsPerPage);
   paginationContainer.innerHTML = "";
 
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
-    if (i === currentPage) btn.classList.add("active");
-    btn.addEventListener("click", () => {
-      currentPage = i;
-      displayTrips(tripsList);
-      setupPagination(tripsList);
-    });
-    paginationContainer.appendChild(btn);
-  }
+  const prevBtn = document.createElement("button");
+  prevBtn.textContent = "Anterior";
+  prevBtn.disabled = currentPage <= 1;
+  prevBtn.addEventListener("click", () => {
+    currentPage = Math.max(1, currentPage - 1);
+    displayTrips(tripsList);
+    setupPagination(tripsList);
+  });
+
+  const nextBtn = document.createElement("button");
+  nextBtn.textContent = "Seguinte";
+  nextBtn.disabled = currentPage >= totalPages;
+  nextBtn.addEventListener("click", () => {
+    currentPage = Math.min(totalPages, currentPage + 1);
+    displayTrips(tripsList);
+    setupPagination(tripsList);
+  });
+
+  const indicator = document.createElement("span");
+  indicator.className = "pagination-indicator";
+  indicator.textContent = `Pagina ${totalPages ? currentPage : 0} de ${totalPages}`;
+
+  paginationContainer.appendChild(prevBtn);
+  paginationContainer.appendChild(indicator);
+  paginationContainer.appendChild(nextBtn);
 }
 
 // -------------------------
@@ -334,31 +485,18 @@ async function showPackages() {
       await fetchTripsAndProviders();
     }
 
-    const tryPaths = [
-      "data/packages.json",
-      "./data/packages.json",
-      "/data/packages.json",
-    ];
-    let pkRes = null,
-      errs = [];
-    for (const p of tryPaths) {
-      try {
-        const r = await fetch(p, { cache: "no-store" });
-        if (r.ok) {
-          pkRes = r;
-          break;
-        }
-        errs.push(`${p}: HTTP ${r.status}`);
-      } catch (e) {
-        errs.push(`${p}: ${e.message}`);
-      }
+    const pkRes = await fetch("/SheiqAway/backend/api/pacotes.php", {
+      cache: "no-store",
+      credentials: "include",
+    });
+    if (!pkRes.ok) {
+      throw new Error(`Falha a obter pacotes -> HTTP ${pkRes.status}`);
     }
-    if (!pkRes)
-      throw new Error(`Falha a obter packages.json → ${errs.join(" | ")}`);
-
-    const packages = await pkRes.json();
-    if (!Array.isArray(packages))
-      throw new Error("packages.json deve ser um array.");
+    const pkPayload = await pkRes.json();
+    if (!pkPayload.ok || !Array.isArray(pkPayload.data)) {
+      throw new Error("Resposta inesperada dos pacotes.");
+    }
+    const packages = pkPayload.data;
 
     // índice só para listar detalhes das trips incluídas (opcional)
     const byId = new Map(trips.map((t) => [t.id, t]));
@@ -367,25 +505,25 @@ async function showPackages() {
     let rendered = 0;
 
     packages.forEach((pkg) => {
-      const ids = Array.isArray(pkg.trips) ? pkg.trips : [];
+      const ids = Array.isArray(pkg.viagens) ? pkg.viagens : [];
       const included = ids.map((id) => byId.get(id)).filter(Boolean);
-      const total = Number(pkg.price) || 0;
+      const total = Number(pkg.preco_total || pkg.price) || 0;
 
       const card = document.createElement("div");
       card.className = "trip-card";
       card.innerHTML = `
-        <h3>${pkg.name || "Pacote"}</h3>
-        <p>${pkg.description || ""}</p>
-        <p><strong>Preço total do pacote:</strong> €${total.toFixed(2)}</p>
+        <h3>${pkg.nome || pkg.name || "Pacote"}</h3>
+        <p>${pkg.descricao || pkg.description || ""}</p>
+          <p><strong>Preco total do pacote:</strong> EUR ${total.toFixed(2)}</p>
         <details style="margin:.6rem 0;">
-          <summary>Ver viagens incluídas</summary>
+          <summary>Ver viagens incluidas</summary>
           <ul style="margin:.4rem 0 0 .8rem;">
             ${
               included.length
                 ? included
                     .map(
                       (t) =>
-                        `<li>${t.from} → ${t.to} • ${t.date} • €${getPrice(
+                          `<li>${t.from} -> ${t.to} - ${t.date} - EUR ${getPrice(
                           t
                         ).toFixed(2)}</li>`
                     )
@@ -411,20 +549,30 @@ async function showPackages() {
         const cart = JSON.parse(localStorage.getItem("cartTickets")) || [];
 
         // adiciona o pacote como UM único item
+        const tripsDetails = included.map((t) => ({
+          id: t.id,
+          origem: t.from,
+          destino: t.to,
+          data_partida: t.dataPartida || t.date || "",
+          companhia: t.providerName || t.provider || "",
+          preco: getPrice(t),
+        }));
+
         cart.push({
           id: Date.now() + Math.random(),
           username: usernameKey,
           isPackage: true,
           packageId: pkg.id,
-          packageName: pkg.name || "Pacote",
-          description: pkg.description || "",
-          trips: ids, // referência às viagens incluídas (sem dividir)
-          price: total, // preço TOTAL do pacote
+          packageName: pkg.nome || pkg.name || "Pacote",
+          description: pkg.descricao || pkg.description || "",
+          trips: ids,
+          tripsDetails,
+          price: total,
         });
 
         localStorage.setItem("cartTickets", JSON.stringify(cart));
         updateCartCount?.();
-        showPopup(`Pacote "${pkg.name || "Pacote"}" adicionado ao carrinho!`);
+        showPopup(`Pacote "${pkg.nome || pkg.name || "Pacote"}" adicionado ao carrinho!`);
       });
 
       tripsContainer.appendChild(card);
@@ -477,3 +625,9 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCartCount();
   ensureToggleButton();
 });
+
+
+
+
+
+

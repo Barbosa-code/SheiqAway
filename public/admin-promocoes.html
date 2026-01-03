@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheiqAway - Promocoes</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="wrapper admin-page">
+    <div id="navbar-container"></div>
+
+    <main class="container">
+      <section class="admin-section">
+        <h3>Promocoes</h3>
+        <form id="promoForm" class="admin-form">
+          <input type="number" id="promoViagemId" placeholder="Viagem ID" min="1" required />
+          <input type="number" id="promoPercent" placeholder="Desconto (%)" min="0.01" step="0.01" required />
+          <select id="promoAtiva">
+            <option value="1" selected>Ativa</option>
+            <option value="0">Inativa</option>
+          </select>
+          <button type="submit">Criar</button>
+        </form>
+        <div class="admin-subsection">
+          <h4>Viagens (selecionar ID)</h4>
+          <form id="viagemSearchForm" class="admin-form admin-form-compact">
+            <input type="text" id="viagemOrigem" placeholder="Origem (OPO)" />
+            <input type="text" id="viagemDestino" placeholder="Destino (LON)" />
+            <input type="date" id="viagemData" />
+            <input type="text" id="viagemQuery" placeholder="Pesquisa rapida (origem, destino, companhia)" />
+            <button type="submit">Pesquisar</button>
+          </form>
+          <div class="admin-table-wrap">
+            <table id="viagensTable" class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Origem</th>
+                  <th>Destino</th>
+                  <th>Data</th>
+                  <th>Preco</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="admin-pagination">
+              <button id="viagensPrev" type="button">Anterior</button>
+              <span id="viagensPageInfo">Pagina 1</span>
+              <button id="viagensNext" type="button">Seguinte</button>
+            </div>
+          </div>
+        </div>
+        <table id="promosTable" class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Viagem</th>
+              <th>Desconto</th>
+              <th>Estado</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/navbar.js" defer></script>
+  <script src="js/admin-common.js" defer></script>
+  <script src="js/admin-promocoes.js" defer></script>
+
+  <div id="adminErrorModal" class="admin-modal" aria-hidden="true">
+    <div class="admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminErrorTitle">
+      <h4 id="adminErrorTitle">Operacao nao permitida</h4>
+      <p id="adminErrorText"></p>
+      <button id="adminErrorClose" type="button">Fechar</button>
+    </div>
+  </div>
+</body>
+</html>

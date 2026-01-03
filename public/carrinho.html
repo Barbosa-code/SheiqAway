@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SheiqAway - Carrinho</title>
-    <link rel="stylesheet" href="css/carrinho.css" />
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/carrinho.css" />
   </head>
   <body>
     <div class="wrapper">
@@ -40,6 +40,26 @@
           </aside>
         </div>
       </main>
+    </div>
+
+    <div id="passengerModal" class="modal">
+      <div class="modal-content passenger-modal-content">
+        <h3>Dados dos Passageiros</h3>
+        <p id="passengerTripInfo" class="modal-trip"></p>
+        <p class="modal-note">Adiciona os passageiros para esta reserva.</p>
+        <div id="passengerList" class="passenger-list"></div>
+        <button id="addPassengerBtn" class="secondary-btn" type="button">
+          Adicionar Passageiro
+        </button>
+        <div class="modal-actions">
+          <button id="passengerCancelBtn" class="cancel-btn" type="button">
+            Cancelar
+          </button>
+          <button id="passengerConfirmBtn" class="confirm-btn" type="button">
+            Confirmar
+          </button>
+        </div>
+      </div>
     </div>
 
     <script src="js/navbar.js" defer></script>

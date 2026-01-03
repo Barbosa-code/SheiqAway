@@ -1,4 +1,4 @@
-// navbar.js
+﻿// navbar.js
 async function loadNavbar() {
   const container = document.getElementById("navbar-container");
   if (!container) return;
@@ -7,28 +7,46 @@ async function loadNavbar() {
   const html = await response.text();
   container.innerHTML = html;
 
-  // Agora inicialize a sessão
   const userInfo = document.getElementById("userInfo");
   const logoutBtn = document.getElementById("logoutBtn");
   const loginBtn = document.getElementById("loginBtn");
+  const adminLinks = container.querySelectorAll(".nav-admin");
+  const defaultLinks = container.querySelectorAll(".nav-default");
 
   let loggedUser = JSON.parse(localStorage.getItem("loggedUser"));
 
   function updateUserUI() {
     if (loggedUser) {
-      userInfo.textContent = `
-                                             ${loggedUser.username}`;
+      const name = loggedUser.nome || loggedUser.username || loggedUser.email;
+      userInfo.textContent = ` ${name}`;
       userInfo.style.display = "inline-block";
       logoutBtn.style.display = "inline-block";
       loginBtn.style.display = "none";
+      if (loggedUser.role === "admin") {
+        defaultLinks.forEach((link) => (link.style.display = "none"));
+        adminLinks.forEach((link) => (link.style.display = "inline-block"));
+      } else {
+        defaultLinks.forEach((link) => (link.style.display = "inline-block"));
+        adminLinks.forEach((link) => (link.style.display = "none"));
+      }
     } else {
       userInfo.style.display = "none";
       logoutBtn.style.display = "none";
       loginBtn.style.display = "inline-block";
+      defaultLinks.forEach((link) => (link.style.display = "inline-block"));
+      adminLinks.forEach((link) => (link.style.display = "none"));
     }
   }
 
-  logoutBtn.addEventListener("click", () => {
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await fetch("/SheiqAway/backend/auth/logout.php", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // ignore
+    }
     localStorage.removeItem("loggedUser");
     loggedUser = null;
     updateUserUI();
@@ -42,5 +60,6 @@ async function loadNavbar() {
   updateUserUI();
 }
 
-// Chama a função
 loadNavbar();
+
+

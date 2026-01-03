@@ -1,0 +1,111 @@
+﻿SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS passageiros;
+DROP TABLE IF EXISTS reservas;
+DROP TABLE IF EXISTS pontos_fidelizacao;
+DROP TABLE IF EXISTS pacotes;
+DROP TABLE IF EXISTS promocoes;
+DROP TABLE IF EXISTS admin_users;
+DROP TABLE IF EXISTS users;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  telefone VARCHAR(30) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE admin_users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_admin_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE promocoes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  codigo VARCHAR(50) NOT NULL,
+  descricao VARCHAR(255) NULL,
+  percentual_desconto DECIMAL(5,2) NOT NULL,
+  data_inicio DATE NOT NULL,
+  data_fim DATE NOT NULL,
+  ativa TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_promocoes_codigo (codigo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE pacotes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(120) NOT NULL,
+  descricao TEXT NULL,
+  origem VARCHAR(10) NOT NULL,
+  destino VARCHAR(10) NOT NULL,
+  data_partida DATE NOT NULL,
+  data_regresso DATE NULL,
+  preco_base DECIMAL(10,2) NOT NULL,
+  promocao_id INT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_pacotes_promocao_id (promocao_id),
+  CONSTRAINT fk_pacotes_promocoes
+    FOREIGN KEY (promocao_id) REFERENCES promocoes(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE reservas (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  api_reserva_id INT UNSIGNED NULL,
+  viagem_id INT UNSIGNED NOT NULL,
+  companhia VARCHAR(50) NULL,
+  origem VARCHAR(10) NOT NULL,
+  destino VARCHAR(10) NOT NULL,
+  data_partida DATE NOT NULL,
+  preco_total DECIMAL(10,2) NOT NULL,
+  estado VARCHAR(30) NOT NULL DEFAULT 'confirmada',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_reservas_user_id (user_id),
+  KEY idx_reservas_destino (destino),
+  CONSTRAINT fk_reservas_users
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE passageiros (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  reserva_id INT UNSIGNED NOT NULL,
+  nome VARCHAR(120) NOT NULL,
+  data_nascimento DATE NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_passageiros_reserva_id (reserva_id),
+  CONSTRAINT fk_passageiros_reservas
+    FOREIGN KEY (reserva_id) REFERENCES reservas(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE pontos_fidelizacao (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  pontos INT NOT NULL DEFAULT 0,
+  atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_pontos_user_id (user_id),
+  CONSTRAINT fk_pontos_users
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

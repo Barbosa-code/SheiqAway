@@ -16,13 +16,11 @@
     <!-- Conteúdo principal -->
     <main class="container">
       <h2>Minhas Viagens</h2>
+      <p id="pointsInfo"></p>
       <div id="ticketsContainer" class="tickets-grid"></div>
     </main>
   </div>
 
-  <script src="js/navbar.js"></script>
-  <script src="js/tickets.js"></script>
-  
   <div id="confirm-modal" class="modal">
   <div class="modal-content">
     <p id="confirm-message">Mensagem de confirmação</p>
@@ -34,12 +32,23 @@
 </div>
 
 <!-- Alert Modal -->
-<div id="alert-modal" class="modal">
+  <div id="alert-modal" class="modal">
   <div class="modal-content">
     <p id="alert-message">Mensagem de alerta</p>
     <div class="modal-actions">
       <button id="alert-ok" class="btn">OK</button>
     </div>
+  </div>
+</div>
+
+<!-- Detalhes Modal -->
+<div id="details-modal" class="modal">
+  <div class="modal-content details-modal">
+    <div class="details-header">
+      <h3>Detalhes da Reserva</h3>
+      <button id="details-close" class="btn">Fechar</button>
+    </div>
+    <div id="details-body" class="details-body"></div>
   </div>
 </div>
 
@@ -55,5 +64,7 @@
   </div>
 </div>
 
+  <script src="js/navbar.js" defer></script>
+  <script src="js/tickets.js" defer></script>
 </body>
 </html>

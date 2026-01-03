@@ -1,18 +1,9 @@
-const loginBtn = document.getElementById("loginBtn");
+﻿const loginBtn = document.getElementById("loginBtn");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const loginError = document.getElementById("loginError");
 
-// Inicializa usuários de teste, caso não existam
-if (!localStorage.getItem("users")) {
-  const demoUsers = [
-    { username: "User1", email: "user1@example.com", password: "123456" },
-    { username: "User2", email: "user2@example.com", password: "senha123" },
-  ];
-  localStorage.setItem("users", JSON.stringify(demoUsers));
-}
-
-loginBtn.addEventListener("click", () => {
+loginBtn.addEventListener("click", async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
@@ -21,24 +12,37 @@ loginBtn.addEventListener("click", () => {
     return;
   }
 
-  const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
-
   loginBtn.disabled = true;
   loginError.textContent = "";
 
-  setTimeout(() => {
-    // Busca usuário pelo email e senha
-    const loggedUser = storedUsers.find(
-      u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
+  try {
+    const res = await fetch("/SheiqAway/backend/auth/login.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (loggedUser) {
-      // Salva username, email e password no localStorage
-      localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
-      window.location.href = "index.html";
-    } else {
-      loginError.textContent = "Email ou password inválidos.";
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      loginError.textContent = data.error || "Email ou password invalidos.";
       loginBtn.disabled = false;
+      return;
     }
-  }, 500);
+
+    if (data.user) {
+      localStorage.setItem("loggedUser", JSON.stringify(data.user));
+    }
+
+    if (data.user && data.user.role === "admin") {
+      window.location.href = "admin-dashboard.html";
+    } else {
+      window.location.href = "index.html";
+    }
+  } catch (err) {
+    loginError.textContent = "Erro ao comunicar com o servidor.";
+    loginBtn.disabled = false;
+  }
 });
+
+
