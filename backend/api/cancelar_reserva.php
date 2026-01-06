@@ -63,12 +63,12 @@ if ($apiId > 0) {
     }
 }
 
-if ($apiId > 0) {
-    $stmt = $pdo->prepare('UPDATE reservas SET estado = ? WHERE api_reserva_id = ?');
-    $stmt->execute([$status, $apiId]);
-} else {
+if ($localId > 0) {
     $stmt = $pdo->prepare('UPDATE reservas SET estado = ? WHERE id = ?');
     $stmt->execute([$status, $localId]);
+} elseif ($apiId > 0) {
+    $stmt = $pdo->prepare('UPDATE reservas SET estado = ? WHERE api_reserva_id = ?');
+    $stmt->execute([$status, $apiId]);
 }
 
 json_response(['ok' => true]);

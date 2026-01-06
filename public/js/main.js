@@ -297,24 +297,26 @@ function normalizeTrip(raw) {
   };
 }
 
+async function fetchTripsRaw() {
+  const res = await fetch("/SheiqAway/backend/api/viagens.php", {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`API: HTTP ${res.status}`);
+  const payload = await res.json();
+  if (!payload.ok || !Array.isArray(payload.data)) {
+    throw new Error("Resposta inesperada da API.");
+  }
+  return payload.data.map(normalizeTrip);
+}
+
 async function fetchTripsAndProviders() {
   try {
-    const res = await fetch("/SheiqAway/backend/api/viagens.php", {
-      cache: "no-store",
-      credentials: "include",
+    const list = await fetchTripsRaw();
+    trips = list.filter((trip) => {
+      const dateValue = trip.date || formatDatePart(trip.dataPartida);
+      return isTodayOrFuture(dateValue);
     });
-    if (!res.ok) throw new Error(`API: HTTP ${res.status}`);
-    const payload = await res.json();
-    if (!payload.ok || !Array.isArray(payload.data)) {
-      throw new Error("Resposta inesperada da API.");
-    }
-
-    trips = payload.data
-      .map(normalizeTrip)
-      .filter((trip) => {
-        const dateValue = trip.date || formatDatePart(trip.dataPartida);
-        return isTodayOrFuture(dateValue);
-      });
 
     currentPage = 1;
     updateHeroDeal(trips);
@@ -585,9 +587,7 @@ function ensureToggleButton() {
 
 async function showPackages() {
   try {
-    if (!Array.isArray(trips) || trips.length === 0) {
-      await fetchTripsAndProviders();
-    }
+    const allTrips = await fetchTripsRaw();
 
     const pkRes = await fetch("/SheiqAway/backend/api/pacotes.php", {
       cache: "no-store",
@@ -603,14 +603,16 @@ async function showPackages() {
     const packages = pkPayload.data;
 
     // índice só para listar detalhes das trips incluídas (opcional)
-    const byId = new Map(trips.map((t) => [t.id, t]));
+    const byId = new Map(allTrips.map((t) => [String(t.id), t]));
 
     tripsContainer.innerHTML = "";
     let rendered = 0;
 
     packages.forEach((pkg) => {
       const ids = Array.isArray(pkg.viagens) ? pkg.viagens : [];
-      const included = ids.map((id) => byId.get(id)).filter(Boolean);
+      const included = ids
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean);
       const total = Number(pkg.preco_total || pkg.price) || 0;
 
       const card = document.createElement("div");
