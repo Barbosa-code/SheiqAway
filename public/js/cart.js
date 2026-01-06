@@ -62,6 +62,45 @@ function getItemTotal(t) {
   return base * getItemQty(t);
 }
 
+function normalizeSeats(value) {
+  const seats = Number(value);
+  if (!Number.isFinite(seats) || seats <= 0) return null;
+  return Math.floor(seats);
+}
+
+function getMaxPassengers(item) {
+  const direct = normalizeSeats(
+    item?.availableSeats ?? item?.lugares_disponiveis ?? item?.seats ?? null
+  );
+  if (direct) return direct;
+  if (item?.isPackage && Array.isArray(item.tripsDetails)) {
+    const mins = item.tripsDetails
+      .map((t) =>
+        normalizeSeats(t?.availableSeats ?? t?.lugares_disponiveis ?? t?.seats)
+      )
+      .filter((v) => v);
+    if (mins.length) return Math.min(...mins);
+  }
+  return null;
+}
+
+
+function formatTripType(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "N/A";
+  const normalized = raw.toLowerCase();
+  if (normalized === "ida") return "IDA";
+  if (
+    normalized === "ida_volta" ||
+    normalized === "ida-volta" ||
+    normalized === "ida volta" ||
+    normalized === "ida/volta"
+  ) {
+    return "IDA E VOLTA";
+  }
+  return raw;
+}
+
 let availablePoints = 0;
 let appliedPoints = 0;
 
@@ -93,6 +132,11 @@ function renderCart() {
   items.forEach((t) => {
     if (!t.passengersCount || t.passengersCount < 1) {
       t.passengersCount = 1;
+      needsSave = true;
+    }
+    const maxSeats = getMaxPassengers(t);
+    if (maxSeats && t.passengersCount > maxSeats) {
+      t.passengersCount = maxSeats;
       needsSave = true;
     }
   });
@@ -139,7 +183,7 @@ function renderCart() {
             <p>Data: ${t.date} | ${t.depart || ""}${t.arrive ? " - " + t.arrive : ""}</p>
             <p>Duracao: ${t.durationMin} min | Stops: ${t.stops}</p>
             <p>Preco por passageiro: EUR ${price.toFixed(2)}</p>
-            <p>Tipo: ${t.mode || "N/A"}</p>
+            <p>Tipo: ${formatTripType(t.mode)}</p>
             <p>Empresa: ${t.provider || t.providerName || "Nao especificado"}</p>
             <label class="passenger-qty-label">Passageiros:</label>
             <input class="passenger-qty-input" type="number" min="1" step="1" value="${getItemQty(t)}" />
@@ -157,10 +201,15 @@ function renderCart() {
         if (qtyInput) {
           qtyInput.addEventListener("change", (e) => {
             const nextQty = Math.max(1, Math.floor(Number(e.target.value || 1)));
-            e.target.value = String(nextQty);
+            const maxSeats = getMaxPassengers(t);
+            const finalQty = maxSeats ? Math.min(nextQty, maxSeats) : nextQty;
+            if (maxSeats && nextQty > maxSeats) {
+              alert(`Maximo de passageiros disponivel: ${maxSeats}.`);
+            }
+            e.target.value = String(finalQty);
             const next = getCartItems().map((x) =>
               String(x.id) === String(t.id)
-                ? { ...x, passengersCount: nextQty }
+                ? { ...x, passengersCount: finalQty }
                 : x
             );
             setCartItems(next);
@@ -202,6 +251,27 @@ function validDate(str) {
   return /^\d{4}-\d{2}-\d{2}$/.test(str);
 }
 
+function isPastOrToday(dateStr) {
+  if (!validDate(dateStr)) return false;
+  const date = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() <= today.getTime();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidName(value) {
+  const parts = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return parts.length >= 2;
+}
+
 function createPassengerRow(data = {}, canRemove = true) {
   const row = document.createElement("div");
   row.className = "passenger-row";
@@ -211,20 +281,22 @@ function createPassengerRow(data = {}, canRemove = true) {
   const email = String(data.email || "");
 
   row.innerHTML = `
-    <button type="button" class="remove-passenger" ${
-      canRemove ? "" : "disabled"
-    }>Remover</button>
     <div class="field">
       <label>Nome completo</label>
       <input type="text" data-field="nome" value="${nome}" />
     </div>
-    <div class="field">
+    <div class="field date-field">
       <label>Data de nascimento</label>
       <input type="date" data-field="data_nascimento" value="${dataNasc}" />
     </div>
-    <div class="field full">
+    <div class="field full email-field">
       <label>Email</label>
-      <input type="email" data-field="email" value="${email}" />
+      <div class="email-row">
+        <input type="email" data-field="email" value="${email}" />
+        <button type="button" class="remove-passenger" ${
+          canRemove ? "" : "disabled"
+        }>Remover</button>
+      </div>
     </div>
   `;
 
@@ -253,19 +325,16 @@ function resetPassengerModal(defaultEmail, count, tripLabel) {
   const qty = Math.max(1, Math.floor(Number(count || 1)));
   for (let i = 0; i < qty; i++) {
     passengerList.appendChild(
-      createPassengerRow({ email: defaultEmail || "" }, false)
+      createPassengerRow({ email: defaultEmail || "" }, i > 0)
     );
   }
   updateRemoveButtons();
   if (passengerTripInfo) {
     passengerTripInfo.textContent = tripLabel || "";
   }
-  if (addPassengerBtn) {
-    addPassengerBtn.classList.add("is-hidden");
-  }
 }
 
-function readPassengers(requiredCount) {
+function readPassengers() {
   if (!passengerList) {
     return { ok: false, error: "Modal de passageiros indisponivel." };
   }
@@ -281,10 +350,24 @@ function readPassengers(requiredCount) {
       row.querySelector('[data-field="data_nascimento"]')?.value.trim() || "";
     const email = row.querySelector('[data-field="email"]')?.value.trim() || "";
 
-    if (!nome || !dataNasc || !validDate(dataNasc) || !email) {
+    if (!nome || !isValidName(nome)) {
       return {
         ok: false,
-        error: "Preenche todos os campos com uma data valida.",
+        error: "Nome invalido. Usa nome e apelido.",
+      };
+    }
+
+    if (!dataNasc || !isPastOrToday(dataNasc)) {
+      return {
+        ok: false,
+        error: "Data de nascimento invalida.",
+      };
+    }
+
+    if (!email || !isValidEmail(email)) {
+      return {
+        ok: false,
+        error: "Email invalido.",
       };
     }
 
@@ -295,13 +378,6 @@ function readPassengers(requiredCount) {
     });
   }
 
-  if (requiredCount && passengers.length !== requiredCount) {
-    return {
-      ok: false,
-      error: `Numero de passageiros invalido. Esperado: ${requiredCount}.`,
-    };
-  }
-
   return { ok: true, data: passengers };
 }
 
@@ -310,7 +386,6 @@ function collectPassengers(loggedUser, count, tripLabel) {
     if (
       !passengerModal ||
       !passengerList ||
-      !addPassengerBtn ||
       !passengerCancelBtn ||
       !passengerConfirmBtn
     ) {
@@ -322,16 +397,12 @@ function collectPassengers(loggedUser, count, tripLabel) {
     resetPassengerModal(loggedUser?.email || "", qty, tripLabel);
     passengerModal.style.display = "block";
 
-    const onAdd = () => {
-      passengerList.appendChild(createPassengerRow({}));
-      updateRemoveButtons();
-    };
     const onCancel = () => {
       cleanup();
       resolve(null);
     };
     const onConfirm = () => {
-      const result = readPassengers(qty);
+      const result = readPassengers();
       if (!result.ok) {
         alert(result.error);
         return;
@@ -346,14 +417,11 @@ function collectPassengers(loggedUser, count, tripLabel) {
     };
     const cleanup = () => {
       passengerModal.style.display = "none";
-      addPassengerBtn.removeEventListener("click", onAdd);
       passengerCancelBtn.removeEventListener("click", onCancel);
       passengerConfirmBtn.removeEventListener("click", onConfirm);
       passengerModal.removeEventListener("click", onOverlay);
-      addPassengerBtn.classList.remove("is-hidden");
     };
 
-    addPassengerBtn.addEventListener("click", onAdd);
     passengerCancelBtn.addEventListener("click", onCancel);
     passengerConfirmBtn.addEventListener("click", onConfirm);
     passengerModal.addEventListener("click", onOverlay);
@@ -396,15 +464,25 @@ async function checkout() {
   };
 
   for (const item of items) {
-    const itemPrice = getItemTotal(item);
-    const qty = getItemQty(item);
+    let qty = getItemQty(item);
+    let itemPrice = getItemTotal(item);
+    const maxSeats = getMaxPassengers(item);
+    if (maxSeats && qty > maxSeats) {
+      alert(`Maximo de passageiros disponivel: ${maxSeats}.`);
+      qty = maxSeats;
+      itemPrice = getPriceNum(item) * qty;
+    }
     const tripLabel = item.isPackage
       ? `Pacote ${item.packageName || "Pacote"} | Passageiros: ${qty}`
       : `${item.from || "-"} -> ${item.to || "-"} | Passageiros: ${qty}`;
     const passengers = await collectPassengers(user, qty, tripLabel);
-    if (!passengers || passengers.length !== qty) {
+    if (!passengers || passengers.length < 1) {
       alert("Dados do passageiro invalidos.");
       return;
+    }
+    if (passengers.length !== qty) {
+      qty = passengers.length;
+      itemPrice = getPriceNum(item) * qty;
     }
     const applyDiscount =
       remainingDiscount > 0 ? Math.min(itemPrice, remainingDiscount) : 0;

@@ -15,6 +15,10 @@ if (!is_array($input)) {
 
 $apiId = isset($input['id']) ? (int)$input['id'] : 0;
 $localId = isset($input['local_id']) ? (int)$input['local_id'] : 0;
+$status = trim((string)($input['status'] ?? 'cancelada'));
+if ($status === '') {
+    $status = 'cancelada';
+}
 
 $pdo = get_pdo();
 
@@ -61,10 +65,10 @@ if ($apiId > 0) {
 
 if ($apiId > 0) {
     $stmt = $pdo->prepare('UPDATE reservas SET estado = ? WHERE api_reserva_id = ?');
-    $stmt->execute(['cancelada', $apiId]);
+    $stmt->execute([$status, $apiId]);
 } else {
     $stmt = $pdo->prepare('UPDATE reservas SET estado = ? WHERE id = ?');
-    $stmt->execute(['cancelada', $localId]);
+    $stmt->execute([$status, $localId]);
 }
 
 json_response(['ok' => true]);

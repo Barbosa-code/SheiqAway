@@ -59,6 +59,10 @@ async function loadUser() {
         <strong>${user.telefone || "-"}</strong>
       </div>
       <div class="meta-card">
+        <span>Estado</span>
+        <strong>${Number(user.ativo ?? 1) === 1 ? "Ativo" : "Inativo"}</strong>
+      </div>
+      <div class="meta-card">
         <span>Data registo</span>
         <strong>${formatDate(user.created_at)}</strong>
       </div>

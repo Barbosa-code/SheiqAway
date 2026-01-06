@@ -12,7 +12,7 @@ $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
 if ($method === 'GET') {
     $stmt = $pdo->query(
-        'SELECT u.id, u.nome, u.email, u.telefone, u.created_at, p.pontos
+        'SELECT u.id, u.nome, u.email, u.telefone, u.ativo, u.created_at, p.pontos
          FROM users u
          LEFT JOIN pontos_fidelizacao p ON p.user_id = u.id
          ORDER BY u.created_at DESC'
@@ -62,13 +62,20 @@ if ($method === 'PUT') {
     $nome = trim((string)($input['nome'] ?? ''));
     $email = trim((string)($input['email'] ?? ''));
     $telefone = trim((string)($input['telefone'] ?? ''));
+    $ativo = isset($input['ativo']) ? (int)(bool)$input['ativo'] : null;
 
     if ($id <= 0) {
         json_response(['error' => 'ID invalido.'], 422);
     }
 
-    $stmt = $pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ? WHERE id = ?');
-    $stmt->execute([$nome, $email, $telefone !== '' ? $telefone : null, $id]);
+    if ($ativo === null) {
+        $stmt = $pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ? WHERE id = ?');
+        $stmt->execute([$nome, $email, $telefone !== '' ? $telefone : null, $id]);
+        json_response(['ok' => true]);
+    }
+
+    $stmt = $pdo->prepare('UPDATE users SET ativo = ? WHERE id = ?');
+    $stmt->execute([$ativo, $id]);
     json_response(['ok' => true]);
 }
 

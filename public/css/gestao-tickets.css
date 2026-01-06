@@ -1,18 +1,20 @@
-/* -------------------------
-   GRID DE BILHETES
-------------------------- */
+.container {
+  max-width: 1200px;
+  width: 90%;
+  margin: 2.5rem auto 3rem;
+}
+
 main h2 {
-  font-size: 2.4rem;
-  margin: 2.5rem 0 1rem;
-  color: #0f172a;
-  font-weight: 800;
+  font-family: "Fraunces", serif;
+  font-size: 2.3rem;
+  margin: 0 0 0.8rem;
+  color: var(--ink);
   text-align: center;
-  letter-spacing: 0.6px;
 }
 
 #pointsInfo {
   text-align: center;
-  color: #334155;
+  color: var(--muted);
   font-weight: 600;
   margin-bottom: 2rem;
 }
@@ -20,38 +22,30 @@ main h2 {
 .tickets-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.6rem;
+  gap: 1.4rem;
   justify-items: center;
-  max-width: 1200px;
-  margin: 0 auto 2rem;
 }
 
-/* -------------------------
-   CARD DE BILHETE
-------------------------- */
 .ticket-card {
-  background: linear-gradient(145deg, #ffffff, #eef2ff);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 20px;
   padding: 1.6rem 1.5rem;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.1);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   width: 100%;
   max-width: 420px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .ticket-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   box-shadow: 0 18px 32px rgba(15, 23, 42, 0.14);
 }
 
-/* -------------------------
-   BADGES DE TRANSPORTE
-------------------------- */
 .ticket-badge {
   position: absolute;
   top: 1rem;
@@ -60,37 +54,37 @@ main h2 {
   border-radius: 12px;
   color: #fff;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   letter-spacing: 0.5px;
+  background: var(--accent-cool);
 }
 
 .ticket-badge.plane {
-  background: #3b82f6;
-}
-.ticket-badge.train {
-  background: #22c55e;
-}
-.ticket-badge.bus {
-  background: #facc15;
+  background: #0ea5a5;
 }
 
-/* -------------------------
-   INFORMAÇÃO DO BILHETE
-------------------------- */
+.ticket-badge.train {
+  background: #16a34a;
+}
+
+.ticket-badge.bus {
+  background: #f59e0b;
+}
+
 .ticket-card h3 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   margin-bottom: 0.4rem;
-  color: #1f2937;
+  color: var(--ink);
   font-weight: 700;
   line-height: 1.3;
 }
 
 .ticket-card p {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   margin-bottom: 0.3rem;
-  color: #4b5563;
+  color: var(--muted);
   line-height: 1.5;
 }
 
@@ -101,202 +95,120 @@ main h2 {
 
 .ticket-date {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .ticket-card .price {
   font-weight: 800;
-  color: #0f172a;
+  color: var(--ink);
   margin-top: 0.6rem;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
 }
 
 .actions {
   display: flex;
-  gap: 0.75rem; /* espaço entre os botões */
-  justify-content: flex-end; /* alinha à direita do card */
-  margin-top: 1rem; /* espaço do conteúdo acima */
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .actions button {
-  flex: 1; /* todos ocupam o mesmo espaço */
-  min-width: 100px; /* largura mínima opcional */
-  max-width: 150px; /* largura máxima opcional */
-  height: 45px; /* altura fixa igual para todos */
+  flex: 1;
+  min-width: 100px;
+  max-width: 150px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
 }
-/* -------------------------
-   BOTÃO APAGAR
-------------------------- */
-/* -------------------------
-   BOTÕES DENTRO DOS CARDS
-------------------------- */
-/* Botão Delete (já existente) */
+
+.ticket-card .btn-delete,
+.ticket-card .btn-cancel,
+.ticket-card .btn-details,
+.ticket-card .btn-change {
+  margin-top: auto;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
 .ticket-card .btn-delete {
-  margin-top: auto;
-  padding: 0.65rem 1rem;
-  border: none;
-  border-radius: 16px;
-  color: #fff;
-  background-color: red;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+  background-color: #ef4444;
 }
 
-.ticket-card .btn-delete:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
-}
-
-.ticket-card .btn-delete:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
-}
-
-/* Botão Cancel */
 .ticket-card .btn-cancel {
-  margin-top: auto;
-  padding: 0.65rem 1rem;
-  border: none;
-  border-radius: 16px;
-  background: #9ca3af;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  box-shadow: 0 4px 10px rgba(156, 163, 175, 0.25);
-}
-
-.ticket-card .btn-cancel:hover {
   background: #6b7280;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(156, 163, 175, 0.35);
-}
-
-.ticket-card .btn-cancel:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(156, 163, 175, 0.25);
 }
 
 .ticket-card .btn-details {
-  margin-top: auto;
-  padding: 0.65rem 1rem;
-  border: none;
-  border-radius: 16px;
-  background: #0ea5e9;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);
+  background: #0ea5a5;
 }
 
-.ticket-card .btn-details:hover {
-  background: #0284c7;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(14, 165, 233, 0.35);
-}
-
-/* Botão Change */
 .ticket-card .btn-change {
-  margin-top: auto;
-  padding: 0.65rem 1rem;
-  border: none;
-  border-radius: 16px;
   background: #3b82f6;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
 }
 
+.ticket-card .btn-delete:hover,
+.ticket-card .btn-cancel:hover,
+.ticket-card .btn-details:hover,
 .ticket-card .btn-change:hover {
-  background: #2563eb;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.35);
+  filter: brightness(1.05);
 }
 
-.ticket-card .btn-change:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
-}
-
-.tickets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  justify-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  align-items: start; /* impede que cards fiquem com altura da linha igual */
-}
-
-
-/* -------------------------
-   MENSAGEM DE BILHETES VAZIOS
-------------------------- */
 .tickets-grid p {
   text-align: center;
   font-size: 1rem;
-  color: #6b7280;
-  grid-column: 1 / -1; /* ocupa toda a largura do grid */
+  color: var(--muted);
+  grid-column: 1 / -1;
 }
 
 .ticket-card.package {
-  border: 2px solid #3b82f6;
-  background: linear-gradient(145deg, #e0f2ff, #f3f6fb);
+  border: 2px solid rgba(249, 115, 22, 0.5);
+  background: linear-gradient(145deg, #fff7ed, #fef3c7);
 }
 
 .modal {
   display: none;
   position: fixed;
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(15, 23, 42, 0.55);
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1.5rem;
 }
 
 .modal.active {
   display: flex;
 }
 
-.popup-box {
+#change-modal {
+  z-index: 1200;
+}
+
+.modal-content {
   background: #fff;
   padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  border-radius: 18px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
   text-align: center;
-  max-width: 400px;
+  max-width: 420px;
+  width: min(420px, 92vw);
 }
 
 .details-modal {
@@ -314,8 +226,8 @@ main h2 {
 }
 
 .details-body {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #f8faf9;
+  border: 1px solid var(--stroke);
   padding: 1.2rem;
   border-radius: 12px;
   max-height: 60vh;
@@ -324,10 +236,6 @@ main h2 {
   line-height: 1.5;
   display: grid;
   gap: 0.8rem;
-}
-
-.details-row-full {
-  grid-column: 1 / -1;
 }
 
 .details-list {
@@ -347,19 +255,137 @@ main h2 {
 
 .details-label {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .details-value {
-  color: #334155;
+  color: var(--muted);
   word-break: break-word;
 }
 
+.change-modal {
+  max-width: 920px;
+  width: 92%;
+  text-align: left;
+  max-height: 80vh;
+  overflow: hidden;
+}
 
+.change-body {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-height: 52vh;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
 
-/* -------------------------
-   RESPONSIVIDADE
-------------------------- */
+.change-card {
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.4rem;
+  background: #f8faf9;
+}
+
+.change-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.change-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.change-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.change-actions .btn {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+
+.change-actions .btn.secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.change-pagination {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.change-pagination .btn {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.change-pagination .btn.secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+#change-indicator {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .change-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.modal-actions .btn {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+
+.modal-actions .btn:hover {
+  background: var(--accent-strong);
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  margin-top: 0.6rem;
+  font-family: inherit;
+}
+
 .actions.single {
   justify-content: center;
 }

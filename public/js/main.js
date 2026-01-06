@@ -106,10 +106,89 @@ function formatTimePart(value) {
   return extractTime(str);
 }
 
+function isTodayOrFuture(dateStr) {
+  if (!dateStr) return false;
+  const date = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() >= today.getTime();
+}
+
+
+function formatTripType(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "N/A";
+  const normalized = raw.toLowerCase();
+  if (normalized === "ida") return "IDA";
+  if (
+    normalized === "ida_volta" ||
+    normalized === "ida-volta" ||
+    normalized === "ida volta" ||
+    normalized === "ida/volta"
+  ) {
+    return "IDA E VOLTA";
+  }
+  return raw;
+}
+
 function updateCartCount() {
   const cartTickets = JSON.parse(localStorage.getItem("cartTickets")) || [];
   const cartCount = document.getElementById("cartCount");
   if (cartCount) cartCount.textContent = cartTickets.length;
+}
+
+function updateHeroDeal(list) {
+  const titleEl = document.getElementById("heroDealTitle");
+  const priceEl = document.getElementById("heroDealPrice");
+  if (!titleEl || !priceEl || !Array.isArray(list) || list.length === 0) return;
+
+  const cheapest = list.reduce((best, item) => {
+    const price = getPrice(item);
+    if (!Number.isFinite(price)) return best;
+    if (!best) return item;
+    return getPrice(best) <= price ? best : item;
+  }, null);
+
+  if (!cheapest) return;
+
+  const badgeEl = document.getElementById("heroDealBadge");
+  if (badgeEl) badgeEl.textContent = "Mais barata";
+
+  const from = cheapest.from || "Origem";
+  const to = cheapest.to || "Destino";
+  titleEl.textContent = `${from} -> ${to}`;
+
+  const typeLabel = formatTripType(cheapest.tripType || cheapest.mode || "");
+  const suffix = typeLabel !== "N/A" ? ` - ${typeLabel}` : "";
+  priceEl.textContent = `Desde EUR ${getPrice(cheapest).toFixed(2)}${suffix}`;
+}
+
+function formatLoadInfo(trip) {
+  const available = Number(trip.availableSeats);
+  const total = Number(trip.totalSeats);
+  if (Number.isFinite(available) && available >= 0) {
+    if (Number.isFinite(total) && total > 0) {
+      const used = Math.max(0, total - available);
+      const percent = Math.round((used / total) * 100);
+      return `Lotacao: ${percent}% (livres: ${available})`;
+    }
+    return `Lugares livres: ${available}`;
+  }
+  return "";
+}
+
+function wireHeroPackagesButton() {
+  const heroBtn = document.getElementById("heroPackagesBtn");
+  const toggleBtn = document.getElementById("toggleViewBtn");
+  const explore = document.getElementById("explore");
+  if (!heroBtn || !toggleBtn) return;
+
+  heroBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    toggleBtn.click();
+    explore?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 // -------------------------
@@ -177,6 +256,20 @@ function normalizeTrip(raw) {
   const mode = raw.modo || raw.mode || (raw.tipo ? "plane" : "");
   const tripType = raw.tipo || raw.tripType || "";
   const escalaInfo = raw.escala_info || raw.escalaInfo || null;
+  const availableSeats =
+    raw.lugares_disponiveis ??
+    raw.lugaresDisponiveis ??
+    raw.available_seats ??
+    raw.availableSeats ??
+    null;
+  const totalSeats =
+    raw.lugares_totais ??
+    raw.lugares_totais ??
+    raw.capacidade ??
+    raw.capacidade_total ??
+    raw.total_seats ??
+    raw.totalSeats ??
+    null;
 
   return {
     id: raw.id ?? raw.viagemId ?? raw.codigo ?? raw.tripId ?? 0,
@@ -191,6 +284,8 @@ function normalizeTrip(raw) {
     mode,
     tripType,
     providerName,
+    availableSeats,
+    totalSeats,
     dataPartida: raw.data_partida || raw.dataPartida || "",
     dataChegada: raw.data_chegada || raw.dataChegada || "",
     stopInfo: escalaInfo
@@ -214,9 +309,15 @@ async function fetchTripsAndProviders() {
       throw new Error("Resposta inesperada da API.");
     }
 
-    trips = payload.data.map(normalizeTrip);
+    trips = payload.data
+      .map(normalizeTrip)
+      .filter((trip) => {
+        const dateValue = trip.date || formatDatePart(trip.dataPartida);
+        return isTodayOrFuture(dateValue);
+      });
 
     currentPage = 1;
+    updateHeroDeal(trips);
     displayTrips(trips);
     setupPagination(trips);
   } catch (error) {
@@ -238,7 +339,8 @@ function createTripCard(trip) {
   const basePrice = getPrice(trip);
   const originalPrice =
     typeof trip.price === "object" ? trip.price.original : null;
-  const tipoLabel = trip.tripType || trip.mode || "N/A";
+  const tipoLabel = formatTripType(trip.tripType || trip.mode || "");
+  const loadInfo = formatLoadInfo(trip);
   const escalaLabel = trip.stopInfo
     ? `Escala: ${trip.stopInfo.city || "N/A"}${
         trip.stopInfo.durationMin ? ` (${trip.stopInfo.durationMin} min)` : ""
@@ -254,6 +356,7 @@ function createTripCard(trip) {
     <p>Preco: EUR ${basePrice.toFixed(2)}${originalPrice && Number(originalPrice) > basePrice ? ` <span class="price-original">EUR ${Number(originalPrice).toFixed(2)}</span>` : ""}</p>
     <p>Tipo: ${tipoLabel}</p>
     <p>Empresa: ${trip.providerName}</p>
+    ${loadInfo ? `<p>${loadInfo}</p>` : ""}
     ${escalaLabel ? `<p>${escalaLabel}</p>` : ""}
     
     <button class="buyBtn">Adicionar ao Carrinho</button>
@@ -290,6 +393,7 @@ function createTripCard(trip) {
       data_partida: trip.dataPartida || trip.date,
       companhia: trip.providerName || "",
       passengersCount: 1,
+      availableSeats: trip.availableSeats ?? null,
     };
 
     cartTickets.push(ticket);
@@ -556,6 +660,7 @@ async function showPackages() {
           data_partida: t.dataPartida || t.date || "",
           companhia: t.providerName || t.provider || "",
           preco: getPrice(t),
+          availableSeats: t.availableSeats ?? null,
         }));
 
         cart.push({
@@ -624,6 +729,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchTripsAndProviders();
   updateCartCount();
   ensureToggleButton();
+  wireHeroPackagesButton();
 });
 
 

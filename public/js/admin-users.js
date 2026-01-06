@@ -60,12 +60,17 @@ function renderUsers() {
   page.forEach((u) => {
     const card = document.createElement("div");
     card.className = "user-card";
+    const isActive = Number(u.ativo ?? 1) === 1;
     card.innerHTML = `
       <h4>${u.nome}</h4>
       <p>${u.email}</p>
       <p>Pontos: ${u.pontos ?? 0}</p>
+      <p>Estado: ${isActive ? "Ativo" : "Inativo"}</p>
       <div class="user-actions">
         <button class="btn-primary" data-action="details" data-id="${u.id}">Ver detalhes</button>
+        <button class="btn-primary" data-action="toggle" data-id="${u.id}">
+          ${isActive ? "Desativar" : "Ativar"}
+        </button>
         <button class="btn-danger" data-action="delete" data-id="${u.id}">Apagar</button>
       </div>
     `;
@@ -77,6 +82,14 @@ function renderUsers() {
       await apiFetch("/SheiqAway/backend/admin/users.php", {
         method: "DELETE",
         body: JSON.stringify({ id: u.id }),
+      });
+      await loadUsers();
+    });
+    card.querySelector('[data-action="toggle"]').addEventListener("click", async () => {
+      const next = !isActive;
+      await apiFetch("/SheiqAway/backend/admin/users.php", {
+        method: "PUT",
+        body: JSON.stringify({ id: u.id, ativo: next ? 1 : 0 }),
       });
       await loadUsers();
     });

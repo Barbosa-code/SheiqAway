@@ -16,7 +16,7 @@ if ($userId <= 0) {
 $pdo = get_pdo();
 
 $stmt = $pdo->prepare(
-    'SELECT u.id, u.nome, u.email, u.telefone, u.created_at, p.pontos
+    'SELECT u.id, u.nome, u.email, u.telefone, u.ativo, u.created_at, p.pontos
      FROM users u
      LEFT JOIN pontos_fidelizacao p ON p.user_id = u.id
      WHERE u.id = ?

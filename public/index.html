@@ -11,8 +11,65 @@
       <!-- Navbar -->
       <div id="navbar-container"></div>
 
-      <!-- Conteúdo principal -->
-      <main class="main-layout">
+      <!-- Hero / Landing -->
+      <header class="hero">
+        <div class="hero-content">
+          <p class="eyebrow">SheiqAway - portal de viagens</p>
+          <h1>Planeia viagens com estilo, clareza e tempo ganho.</h1>
+          <p class="hero-subtitle">
+            Pesquisa rapida, pacotes inteligentes e um carrinho que organiza tudo
+            por ti. Pronto para arrancar?
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#explore">Explorar viagens</a>
+            <a class="btn ghost" id="heroPackagesBtn" href="#explore">Ver pacotes</a>
+          </div>
+          <div class="hero-metrics">
+            <div class="metric">
+              <span class="metric-value">+120</span>
+              <span class="metric-label">destinos</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">24/7</span>
+              <span class="metric-label">suporte</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">+18k</span>
+              <span class="metric-label">reservas</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-top">
+            <span class="badge" id="heroDealBadge">Oferta da semana</span>
+            <h3 id="heroDealTitle">Lisboa -> Marrakech</h3>
+            <p id="heroDealPrice">Desde EUR 89 - Ida e volta</p>
+          </div>
+          <div class="hero-card-bottom">
+            <span class="chip">Escala inteligente</span>
+            <span class="chip">Cancelamento flexivel</span>
+            <span class="chip">Check-in guiado</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="highlights">
+        <div class="highlight-card">
+          <h3>Filtros que funcionam</h3>
+          <p>Pesquisa por origem, destino, data e modo sem perder tempo.</p>
+        </div>
+        <div class="highlight-card">
+          <h3>Pacotes com contexto</h3>
+          <p>Compara opcoes completas e decide com informacao clara.</p>
+        </div>
+        <div class="highlight-card">
+          <h3>Carrinho organizado</h3>
+          <p>Resumo de custos, passageiros e pontos num unico lugar.</p>
+        </div>
+      </section>
+
+      <!-- Conteudo principal -->
+      <main id="explore" class="main-layout">
         <!-- Sidebar Filtros -->
         <aside class="sidebar">
           <h2>Filtros</h2>
@@ -35,15 +92,15 @@
               <option value="">Todos</option>
               <option value="bus">Autocarro</option>
               <option value="train">Comboio</option>
-              <option value="plane">Avião</option>
+              <option value="plane">Aviao</option>
             </select>
           </div>
           <div class="filter-group">
-            <label for="maxPrice">Preço máximo</label>
+            <label for="maxPrice">Preco maximo</label>
             <input
               type="number"
               id="maxPrice"
-              placeholder="Preço máximo"
+              placeholder="Preco maximo"
               min="0"
               step="0.01"
             />
@@ -51,8 +108,8 @@
           <div class="filter-group">
             <label for="sort">Ordenar por</label>
             <select id="sort">
-              <option value="price">Preço</option>
-              <option value="duration">Duração</option>
+              <option value="price">Preco</option>
+              <option value="duration">Duracao</option>
             </select>
           </div>
           <button id="searchBtn" class="search-btn">Pesquisar</button>
@@ -61,12 +118,30 @@
         <!-- Resultados -->
         <section class="results-section">
           <div class="results-header">
+            <div>
+              <p class="section-kicker">Viagens disponiveis</p>
+              <h2>Encontra a tua proxima viagem</h2>
+            </div>
             <button id="toggleViewBtn" class="toggle-btn">Ver Pacotes</button>
           </div>
           <div id="tripsContainer" class="trips-grid"></div>
           <div id="pagination" class="pagination"></div>
         </section>
       </main>
+
+      <section class="cta">
+        <div class="cta-card">
+          <div>
+            <p class="section-kicker">Pronto para reservar?</p>
+            <h2>Organiza tudo num so lugar e segue viagem.</h2>
+            <p>
+              Guarda as tuas viagens, aplica pontos e gere passageiros sem sair
+              do painel.
+            </p>
+          </div>
+          <a class="btn primary" href="carrinho.html">Ir para o carrinho</a>
+        </div>
+      </section>
 
       <!-- Modal login -->
       <div id="loginModal" class="modal">
@@ -79,8 +154,6 @@
     </div>
 
     <div id="toast-container"></div>
-
-   
 
     <script src="js/navbar.js"></script>
     <script src="js/main.js"></script>

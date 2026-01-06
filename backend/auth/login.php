@@ -23,10 +23,13 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 $pdo = get_pdo();
 
-$stmt = $pdo->prepare('SELECT id, nome, email, password_hash FROM users WHERE email = ? LIMIT 1');
+$stmt = $pdo->prepare('SELECT id, nome, email, password_hash, ativo FROM users WHERE email = ? LIMIT 1');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 if ($user && password_verify($password, $user['password_hash'])) {
+    if ((int)($user['ativo'] ?? 1) !== 1) {
+        json_response(['error' => 'Conta desativada.'], 403);
+    }
     $_SESSION['user'] = [
         'id' => (int)$user['id'],
         'nome' => $user['nome'],

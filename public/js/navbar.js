@@ -10,6 +10,7 @@ async function loadNavbar() {
   const userInfo = document.getElementById("userInfo");
   const logoutBtn = document.getElementById("logoutBtn");
   const loginBtn = document.getElementById("loginBtn");
+  const logoLink = container.querySelector(".logo");
   const adminLinks = container.querySelectorAll(".nav-admin");
   const defaultLinks = container.querySelectorAll(".nav-default");
 
@@ -23,13 +24,16 @@ async function loadNavbar() {
       logoutBtn.style.display = "inline-block";
       loginBtn.style.display = "none";
       if (loggedUser.role === "admin") {
+        if (logoLink) logoLink.href = "admin-dashboard.html";
         defaultLinks.forEach((link) => (link.style.display = "none"));
         adminLinks.forEach((link) => (link.style.display = "inline-block"));
       } else {
+        if (logoLink) logoLink.href = "index.html";
         defaultLinks.forEach((link) => (link.style.display = "inline-block"));
         adminLinks.forEach((link) => (link.style.display = "none"));
       }
     } else {
+      if (logoLink) logoLink.href = "index.html";
       userInfo.style.display = "none";
       logoutBtn.style.display = "none";
       loginBtn.style.display = "inline-block";

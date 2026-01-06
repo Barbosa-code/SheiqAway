@@ -1,108 +1,83 @@
-/* -------------------------
-   ESTILOS GERAIS
-------------------------- */
 body {
-  font-family: "Poppins", sans-serif;
-  background: linear-gradient(135deg, #74ebd5, #acb6e5);
-  color: #333;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--ink);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .container {
   max-width: 1200px;
   width: 90%;
-  margin: 2rem auto;
+  margin: 2.5rem auto 3.5rem;
 }
 
 h2 {
-  font-size: 2.5rem;
+  font-family: "Fraunces", serif;
+  font-size: 2.4rem;
   margin-bottom: 2rem;
-  color: #1f2937;
-  font-weight: 700;
+  color: var(--ink);
   text-align: center;
-  letter-spacing: 0.5px;
 }
 
-/* -------------------------
-   LAYOUT DO CARRINHO
-------------------------- */
 .cart-content {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start; /* sidebar e grelha niveladas no topo */
-}
-
-/* Grelha dos bilhetes */
-.tickets-grid {
-  flex: 3;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.8rem;
-  justify-content: start; /* não esticar se houver só 1 card */
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 2rem;
+  align-items: start;
 }
 
-.tickets-grid .ticket-card {
-  max-width: 400px;  /* não ocupa largura total se estiver sozinho */
-  width: 100%;
-  margin: 0 auto;    /* centra o card */
-  align-self: start;
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.6rem;
 }
 
-/* -------------------------
-   CARD DE BILHETE
-------------------------- */
 .ticket-card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 2rem 1.8rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 22px;
+  padding: 1.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  position: relative;
+  gap: 0.35rem;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .ticket-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.14);
 }
 
 .ticket-card h3 {
-  font-size: 1.4rem;
-  margin-bottom: 0.5rem;
-  color: #111827;
+  font-size: 1.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .ticket-card p {
-  font-size: 0.95rem;
-  margin-bottom: 0.3rem;
-  color: #4b5563;
+  font-size: 0.92rem;
+  color: var(--muted);
 }
 
 .ticket-card .price {
   font-weight: 700;
-  color: #1f2937;
-  margin-top: 0.5rem;
+  color: var(--ink);
+  margin-top: 0.6rem;
 }
 
 .passenger-qty-label {
   font-weight: 600;
   margin-top: 0.6rem;
   display: block;
-  color: #374151;
+  color: var(--muted);
 }
 
 .passenger-qty-input {
   width: 100%;
-  padding: 0.6rem;
+  padding: 0.6rem 0.8rem;
   border-radius: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--stroke);
   outline: none;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
 }
 
 .ticket-card .deleteBtn {
@@ -114,7 +89,7 @@ h2 {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .ticket-card .deleteBtn:hover {
@@ -122,136 +97,107 @@ h2 {
   transform: translateY(-2px);
 }
 
-/* -------------------------
-   BARRA LATERAL DO CARRINHO
-------------------------- */
 .cart-sidebar {
-  flex: 1.2; /* aumenta largura relativa */
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  padding: 2.5rem 2rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 26px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+  padding: 2.2rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  border: 1px solid #e5e7eb;
+  gap: 1.2rem;
 }
 
-/* Título */
 .cart-sidebar h3 {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #f3f4f6;
-  padding-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
 }
 
-.cart-sidebar p {
-  padding-bottom: 4px;
-}
-.cart-sidebar label{
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-  display: block;
-  color: #374151;
-}
-
-/* Lista do resumo */
 .cart-summary-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  gap: 0.6rem;
 }
 
 .cart-summary-list li {
-  font-size: 1rem;
-  color: #4b5563;
-  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--muted);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px dashed #e5e7eb;
+  border-bottom: 1px dashed rgba(15, 23, 42, 0.12);
   padding-bottom: 0.5rem;
-}
-
-.cart-summary-list li:last-child {
-  border-bottom: none;
 }
 
 .cart-summary-list li span {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--ink);
 }
 
-/* Total */
 .cart-total {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
-  margin: 1rem 0 0.6rem 0;
+  color: var(--ink);
   text-align: right;
-  border-top: 2px solid #f3f4f6;
-  padding-top: 0.8rem;
 }
 
-/* Inputs de pontos */
+.cart-sidebar label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .cart-sidebar input {
   width: 100%;
-  padding: 0.7rem;
+  padding: 0.7rem 0.8rem;
   border-radius: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--stroke);
   outline: none;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
 }
 
 .cart-sidebar input:focus {
-  border-color: #4caf50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
 }
 
-/* Botões */
 .applyPointsBtn {
   width: 100%;
   padding: 0.8rem;
-  background: #4caf50;
+  background: var(--accent);
   color: #fff;
   font-weight: 600;
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-bottom: 1rem;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .applyPointsBtn:hover {
-  background: #3e8e41;
+  background: var(--accent-strong);
+  transform: translateY(-1px);
 }
 
-/* Botão de checkout */
 .checkoutBtn {
   width: 100%;
-  padding: 1.2rem;
-  background: #4caf50;
+  padding: 1rem;
+  background: var(--ink);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   border: none;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 14px rgba(76, 175, 80, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.2);
 }
 
 .checkoutBtn:hover {
-  background: #3e8e41;
   transform: translateY(-2px);
 }
 
-/* -------------------------
-   MODAL PASSAGEIROS
-------------------------- */
 .passenger-modal-content {
   max-width: 620px;
   text-align: left;
@@ -265,24 +211,9 @@ h2 {
   margin: 6vh auto;
 }
 
-.passenger-modal-content h3 {
-  margin-bottom: 0.5rem;
-}
-
 .modal-note {
   font-size: 0.95rem;
-  color: #4b5563;
-  margin-bottom: 1rem;
-}
-
-.modal-trip {
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 0.4rem;
-}
-
-.is-hidden {
-  display: none;
+  color: var(--muted);
 }
 
 .passenger-list {
@@ -296,8 +227,8 @@ h2 {
 }
 
 .passenger-row {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #f8faf9;
+  border: 1px solid var(--stroke);
   border-radius: 14px;
   padding: 1rem;
   display: grid;
@@ -306,50 +237,50 @@ h2 {
   position: relative;
 }
 
-.passenger-row:hover {
-  border-color: #cbd5f5;
-}
-
 .passenger-row .field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-.passenger-row .field.full {
-  grid-column: 1 / -1;
-}
-
 .passenger-row label {
   font-weight: 600;
-  color: #374151;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
 .passenger-row input {
   padding: 0.6rem;
   border-radius: 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--stroke);
   outline: none;
   font-size: 0.95rem;
 }
 
 .passenger-row input:focus {
-  border-color: #4caf50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
+}
+
+.email-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.email-row input {
+  flex: 1;
 }
 
 .remove-passenger {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
   background: #ef4444;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 0.25rem 0.6rem;
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
   cursor: pointer;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .remove-passenger:disabled {
@@ -360,17 +291,17 @@ h2 {
 .secondary-btn {
   width: 100%;
   padding: 0.75rem;
-  border: 1px dashed #9ca3af;
-  background: #f9fafb;
-  color: #374151;
+  border: 1px dashed rgba(15, 23, 42, 0.2);
+  background: #fff;
+  color: var(--ink);
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .secondary-btn:hover {
-  background: #f3f4f6;
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .modal-actions {
@@ -392,34 +323,22 @@ h2 {
   font-weight: 600;
 }
 
-.passenger-modal-content button {
-  margin-top: 0;
-}
-
 .cancel-btn {
   background: #e5e7eb;
   color: #374151;
 }
 
 .confirm-btn {
-  background: #4caf50;
+  background: var(--accent);
   color: #fff;
 }
 
 .confirm-btn:hover {
-  background: #3e8e41;
+  background: var(--accent-strong);
 }
 
-/* -------------------------
-   RESPONSIVO
-------------------------- */
-@media (max-width: 1024px) {
+@media (max-width: 980px) {
   .cart-content {
-    flex-direction: column;
-  }
-
-  .cart-sidebar {
-    width: 100%;
-    flex: unset;
+    grid-template-columns: 1fr;
   }
 }

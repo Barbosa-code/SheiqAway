@@ -189,6 +189,7 @@ async function fetchApiReservations(email) {
 function normalizeLocalReservation(r) {
   return {
     local_id: r.id ?? null,
+    viagem_id: r.viagem_id ?? r.viagemId ?? null,
     api_id: r.api_reserva_id ?? r.api_id ?? null,
     origem: r.origem,
     destino: r.destino,
@@ -210,6 +211,7 @@ function normalizeApiReservation(r) {
   const viagem = r.viagem || r.viagem_atualizada || {};
   return {
     local_id: null,
+    viagem_id: r.viagemId ?? viagem.id ?? null,
     api_id: r.id ?? r.reservaId ?? null,
     origem: r.origem || viagem.origem || "",
     destino: r.destino || viagem.destino || "",
@@ -269,12 +271,12 @@ async function fetchPoints() {
   return Number(data.pontos || 0);
 }
 
-async function cancelReservation(localId, apiId) {
+async function cancelReservation(localId, apiId, status = "cancelada") {
   const res = await fetch("/SheiqAway/backend/api/cancelar_reserva.php", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ local_id: localId, id: apiId }),
+    body: JSON.stringify({ local_id: localId, id: apiId, status }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.ok) {
@@ -282,8 +284,251 @@ async function cancelReservation(localId, apiId) {
   }
 }
 
+async function adjustPoints(delta) {
+  if (!delta) return;
+  const res = await fetch("/SheiqAway/backend/api/pontos_ajuste.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ delta }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || "Erro ao ajustar pontos.");
+  }
+}
+
 function formatDate(str) {
   return str || "-";
+}
+
+function extractDate(value) {
+  if (!value) return "";
+  const str = String(value);
+  const match = str.match(/\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : "";
+}
+
+function isTodayOrFuture(dateStr) {
+  if (!dateStr) return false;
+  const date = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() >= today.getTime();
+}
+
+async function fetchTrips() {
+  const res = await fetch("/SheiqAway/backend/api/viagens.php", {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => ({}));
+  if (!data.ok || !Array.isArray(data.data)) return [];
+  return data.data;
+}
+
+function normalizeTripOption(raw) {
+  return {
+    id: raw.id ?? raw.viagemId ?? null,
+    origem: raw.origem || raw.from || "",
+    destino: raw.destino || raw.to || "",
+    data_partida: raw.data_partida || raw.dataPartida || raw.data || "",
+    companhia: raw.companhia || raw.company || "",
+    preco: raw.preco_final ?? raw.preco ?? raw.price ?? 0,
+    lugares_disponiveis: raw.lugares_disponiveis ?? raw.lugaresDisponiveis ?? null,
+  };
+}
+
+const changeModal = document.getElementById("change-modal");
+const changeBody = document.getElementById("change-body");
+const changeClose = document.getElementById("change-close");
+const changePrev = document.getElementById("change-prev");
+const changeNext = document.getElementById("change-next");
+const changeIndicator = document.getElementById("change-indicator");
+const changePageSize = 6;
+let changePage = 1;
+let changeOptions = [];
+let changeReservationSource = null;
+
+function hideChangeModal() {
+  changeModal?.classList.remove("active");
+}
+
+changeClose?.addEventListener("click", hideChangeModal);
+changeModal?.addEventListener("click", (e) => {
+  if (e.target === changeModal) hideChangeModal();
+});
+changePrev?.addEventListener("click", () => {
+  changePage = Math.max(1, changePage - 1);
+  renderChangePage();
+});
+changeNext?.addEventListener("click", () => {
+  changePage = changePage + 1;
+  renderChangePage();
+});
+
+async function showChangeOptions(reservation) {
+  if (!changeModal || !changeBody) return;
+
+  detailsModal?.classList.remove("active");
+
+  changeBody.innerHTML = "<p>A carregar viagens...</p>";
+  changeModal.classList.add("active");
+
+  const trips = (await fetchTrips()).map(normalizeTripOption);
+  const from = (reservation.origem || "").toLowerCase();
+  const to = (reservation.destino || "").toLowerCase();
+  const currentTripId = reservation.viagem_id ? String(reservation.viagem_id) : "";
+
+  const matches = trips.filter((t) => {
+    const dateOnly = extractDate(t.data_partida);
+    const sameRoute =
+      (t.origem || "").toLowerCase() === from &&
+      (t.destino || "").toLowerCase() === to;
+    const differentTrip = currentTripId ? String(t.id) !== currentTripId : true;
+    return sameRoute && differentTrip && isTodayOrFuture(dateOnly);
+  });
+
+  if (!matches.length) {
+    changeBody.innerHTML =
+      "<p>Nao existem viagens futuras para esta rota.</p>";
+    if (changeIndicator) changeIndicator.textContent = "Pagina 0";
+    return;
+  }
+
+  changeOptions = matches.sort((a, b) =>
+    String(a.data_partida || "").localeCompare(String(b.data_partida || ""))
+  );
+  changeReservationSource = reservation;
+  changePage = 1;
+  renderChangePage();
+}
+
+function renderChangePage() {
+  if (!changeBody) return;
+  const totalPages = Math.max(1, Math.ceil(changeOptions.length / changePageSize));
+  changePage = Math.min(Math.max(1, changePage), totalPages);
+  const start = (changePage - 1) * changePageSize;
+  const slice = changeOptions.slice(start, start + changePageSize);
+
+  changeBody.innerHTML = slice
+    .map((t) => {
+      const dateOnly = extractDate(t.data_partida);
+      const seats =
+        t.lugares_disponiveis !== null && t.lugares_disponiveis !== undefined
+          ? `Lugares livres: ${t.lugares_disponiveis}`
+          : "Lugares livres: -";
+      return `
+        <div class="change-card">
+          <h4>${t.origem || "-"} -> ${t.destino || "-"}</h4>
+          <p>Data: ${dateOnly || "-"}</p>
+          <p>Companhia: ${t.companhia || "-"}</p>
+          <p>Preco: EUR ${Number(t.preco || 0).toFixed(2)}</p>
+          <p>${seats}</p>
+          <div class="change-actions">
+            <button class="btn" data-trip-id="${t.id}">Selecionar</button>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  if (changeIndicator) {
+    changeIndicator.textContent = `Pagina ${changePage} de ${totalPages}`;
+  }
+  if (changePrev) changePrev.disabled = changePage <= 1;
+  if (changeNext) changeNext.disabled = changePage >= totalPages;
+
+  changeBody.querySelectorAll(".btn[data-trip-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const tripId = btn.dataset.tripId;
+      const selected = changeOptions.find((t) => String(t.id) === String(tripId));
+      if (!selected || !changeReservationSource) return;
+
+      const currentPrice = Number(changeReservationSource.preco_total || 0);
+      const nextPrice = Number(selected.preco || 0);
+      const diff = nextPrice - currentPrice;
+      const diffLabel =
+        diff === 0
+          ? "Sem diferenca de preco."
+          : diff > 0
+          ? `Diferenca: +EUR ${diff.toFixed(2)}`
+          : `Diferenca: -EUR ${Math.abs(diff).toFixed(2)}`;
+      hideChangeModal();
+      const confirmed = await showConfirm(
+        `Isto vai criar uma nova reserva e cancelar a atual. ${diffLabel} Continuar?`
+      );
+      if (!confirmed) return;
+
+      try {
+        await changeReservation(changeReservationSource, selected);
+        hideChangeModal();
+        await showAlert("Reserva alterada com sucesso.");
+        loadAndRender();
+      } catch (err) {
+        await showAlert(err instanceof Error ? err.message : "Erro ao alterar reserva.");
+      }
+    });
+  });
+}
+
+async function createReservation(payload) {
+  const res = await fetch("/SheiqAway/backend/api/reservas.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || "Erro ao criar a reserva.");
+  }
+  return data;
+}
+
+async function changeReservation(current, nextTrip) {
+  const local = current.raw_local || {};
+  const passengers = Array.isArray(local.passageiros) ? local.passageiros : [];
+  if (!passengers.length) {
+    throw new Error("Nao foi possivel carregar os passageiros da reserva.");
+  }
+
+  const seats = Number(nextTrip.lugares_disponiveis);
+  if (Number.isFinite(seats) && seats < passengers.length) {
+    throw new Error("Nao ha lugares suficientes para essa viagem.");
+  }
+
+  const payload = {
+    viagemId: nextTrip.id,
+    origem: nextTrip.origem,
+    destino: nextTrip.destino,
+    data_partida: nextTrip.data_partida,
+    preco_total: Number(nextTrip.preco || 0),
+    companhia: nextTrip.companhia,
+    passageiros: passengers.map((p) => ({
+      nome: p.nome,
+      data_nascimento: p.data_nascimento,
+      email: p.email,
+    })),
+    pontos_usados: 0,
+    total_pago: Number(nextTrip.preco || 0),
+  };
+
+  await createReservation(payload);
+
+  try {
+    await cancelReservation(current.local_id, current.api_id, "alterada");
+    const oldPoints = Math.floor(Number(current.preco_total || 0));
+    if (oldPoints > 0) {
+      await adjustPoints(-oldPoints);
+    }
+  } catch (err) {
+    throw new Error(
+      "Nova reserva criada, mas falhou o cancelamento da antiga."
+    );
+  }
 }
 
 function renderReservations(list) {
@@ -301,7 +546,8 @@ function renderReservations(list) {
     card.className = "ticket-card";
     const estado = r.estado || "confirmada";
 
-    const canCancel = Boolean(r.local_id) && estado !== "cancelada";
+    const canCancel =
+      Boolean(r.local_id) && estado !== "cancelada" && estado !== "alterada";
 
     card.innerHTML = `
       <div class="ticket-header">
@@ -313,6 +559,11 @@ function renderReservations(list) {
       <p>Estado: <strong>${estado}</strong></p>
       <div class="actions${canCancel ? "" : " single"}">
         <button class="btn-details">Detalhes</button>
+        ${
+          canCancel
+            ? `<button class="btn-change">Alterar data</button>`
+            : ""
+        }
         ${
           canCancel
             ? `<button class="btn-cancel" data-local-id="${r.local_id}" data-api-id="${r.api_id ?? ""}">Cancelar</button>`
@@ -354,6 +605,10 @@ function renderReservations(list) {
       } catch (err) {
         await showAlert(err.message || "Erro ao cancelar.");
       }
+    });
+
+    card.querySelector(".btn-change")?.addEventListener("click", async () => {
+      await showChangeOptions(r);
     });
 
     ticketsContainer.appendChild(card);
