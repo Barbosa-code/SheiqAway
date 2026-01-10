@@ -180,10 +180,62 @@ async function fetchApiReservations(email) {
   if (!res.ok) return [];
   const data = await res.json().catch(() => ({}));
   if (!data.ok) return [];
-  if (Array.isArray(data.data)) return data.data;
-  if (Array.isArray(data.data?.reservas)) return data.data.reservas;
-  if (Array.isArray(data.reservas)) return data.reservas;
+  if (Array.isArray(data.data)) {
+    await enrichApiReservations(data.data);
+    return data.data;
+  }
+  if (Array.isArray(data.data?.reservas)) {
+    await enrichApiReservations(data.data.reservas);
+    return data.data.reservas;
+  }
+  if (Array.isArray(data.reservas)) {
+    await enrichApiReservations(data.reservas);
+    return data.reservas;
+  }
   return [];
+}
+
+async function enrichApiReservations(list) {
+  if (!Array.isArray(list) || !list.length) return;
+  const trips = await fetchTrips().catch(() => []);
+  if (!Array.isArray(trips) || !trips.length) return;
+
+  const byId = new Map(
+    trips
+      .map((t) => {
+        const id = t.id ?? t.viagemId ?? t.viagem_id ?? null;
+        return id ? [String(id), t] : null;
+      })
+      .filter(Boolean)
+  );
+
+  list.forEach((r) => {
+    const tripId =
+      r.viagemId ??
+      r.viagem_id ??
+      r.viagem?.id ??
+      r.viagem_atualizada?.id ??
+      null;
+    if (!tripId) return;
+    const trip = byId.get(String(tripId));
+    if (!trip) return;
+
+    if (!r.viagem && !r.viagem_atualizada) {
+      r.viagem = trip;
+    }
+
+    if (!r.origem) r.origem = trip.origem || trip.from || "";
+    if (!r.destino) r.destino = trip.destino || trip.to || "";
+    if (!r.companhia) r.companhia = trip.companhia || trip.company || "";
+    if (!r.data_partida) {
+      r.data_partida = trip.data_partida || trip.dataPartida || trip.data || "";
+    }
+
+    const currentPrice = Number(r.preco_total ?? r.preco ?? 0);
+    if (!Number.isFinite(currentPrice) || currentPrice <= 0) {
+      r.preco_total = trip.preco_final ?? trip.preco ?? trip.price ?? 0;
+    }
+  });
 }
 
 function normalizeLocalReservation(r) {
@@ -234,31 +286,27 @@ function mergeReservations(localList, apiList) {
   const localNorm = localList.map(normalizeLocalReservation);
   const apiNorm = apiList.map(normalizeApiReservation);
 
-  const localByApi = new Map(
-    localNorm
+  const apiById = new Map(
+    apiNorm
       .filter((r) => r.api_id)
       .map((r) => [String(r.api_id), r])
   );
 
-  const merged = apiNorm.map((api) => {
-    const local = api.api_id ? localByApi.get(String(api.api_id)) : null;
-    if (!local) return api;
+  return localNorm.map((local) => {
+    const api = local.api_id ? apiById.get(String(local.api_id)) : null;
+    if (!api) return local;
     return {
       ...api,
       ...local,
+      origem: local.origem || api.origem,
+      destino: local.destino || api.destino,
+      data_partida: local.data_partida || api.data_partida,
+      companhia: local.companhia || api.companhia,
+      preco_total: Number(local.preco_total || 0) > 0 ? local.preco_total : api.preco_total,
       estado: local.estado || api.estado,
       raw_api: api.raw_api,
     };
   });
-
-  const apiIds = new Set(apiNorm.map((r) => String(r.api_id || "")));
-  localNorm.forEach((local) => {
-    if (!local.api_id || !apiIds.has(String(local.api_id))) {
-      merged.push(local);
-    }
-  });
-
-  return merged;
 }
 
 async function fetchPoints() {
@@ -545,6 +593,9 @@ function renderReservations(list) {
     const card = document.createElement("div");
     card.className = "ticket-card";
     const estado = r.estado || "confirmada";
+    const statusKey = String(estado || "confirmada")
+      .toLowerCase()
+      .replace(/\s+/g, "-");
 
     const canCancel =
       Boolean(r.local_id) && estado !== "cancelada" && estado !== "alterada";
@@ -556,8 +607,8 @@ function renderReservations(list) {
       </div>
       <p>Companhia: ${r.companhia || "-"}</p>
       <p>Preco: EUR ${Number(r.preco_total || 0).toFixed(2)}</p>
-      <p>Estado: <strong>${estado}</strong></p>
-      <div class="actions${canCancel ? "" : " single"}">
+      <p>Estado: <span class="status-badge status-${statusKey}">${estado}</span></p>
+      <div class="${canCancel ? "actions confirmed" : "actions single"}">
         <button class="btn-details">Detalhes</button>
         ${
           canCancel

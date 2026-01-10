@@ -359,7 +359,7 @@ function createTripCard(trip) {
     <p>Tipo: ${tipoLabel}</p>
     <p>Empresa: ${trip.providerName}</p>
     ${loadInfo ? `<p>${loadInfo}</p>` : ""}
-    ${escalaLabel ? `<p>${escalaLabel}</p>` : ""}
+    <p class="escala-placeholder">${escalaLabel || "&nbsp;"}</p>
     
     <button class="buyBtn">Adicionar ao Carrinho</button>
   `;
@@ -549,7 +549,6 @@ function ensureToggleButton() {
   if (!title) {
     title = document.createElement("span"); // span dentro da mesma div do botão
     title.id = "mainTitle";
-    title.textContent = "Viagens Disponíveis";
     title.style.marginRight = "1rem"; // espaçamento entre texto e botão
     resultsHeader.prepend(title);
   }
